@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NexaFit</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #c9970c44; border-radius: 4px; }
+@keyframes pulse { 0%,100%{opacity:0.3;transform:scale(0.8)} 50%{opacity:1;transform:scale(1)} }
+@keyframes spin { to { transform: rotate(360deg); } }
+body { margin: 0; background: #0a0a0a; }
+
+/* KEY MODAL */
+.key-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:1000; align-items:center; justify-content:center; padding:20px; }
+.key-modal.open { display:flex; }
+.key-sheet { background:#141414; border:1px solid #2a2a2a; border-top:2px solid #f0b429; border-radius:14px; padding:28px 24px; max-width:380px; width:100%; }
+.key-title { font-family:'Trebuchet MS',sans-serif; font-size:22px; font-weight:900; color:#fff; letter-spacing:-1px; margin-bottom:4px; }
+.key-title span { color:#f0b429; }
+.key-sub { font-size:13px; color:#888; margin-bottom:20px; line-height:1.5; }
+.key-input { width:100%; background:#0a0a0a; border:1px solid #2a2a2a; border-radius:8px; padding:10px 12px; color:#fff; font-family:'Courier New',monospace; font-size:13px; outline:none; margin-bottom:8px; }
+.key-input:focus { border-color:#f0b429; }
+.key-btn { width:100%; padding:12px; background:linear-gradient(135deg,#f0b429,#c9970c); border:none; border-radius:8px; color:#000; font-weight:900; font-size:14px; cursor:pointer; letter-spacing:1px; }
+.key-err { display:none; font-size:12px; color:#ff4444; margin-top:4px; }
+</style>
+</head>
+<body>
+
+<!-- API KEY MODAL -->
+<div class="key-modal" id="keyModal">
+  <div class="key-sheet">
+    <div class="key-title">Nexa<span>FIT</span></div>
+    <div class="key-sub">Enter your Anthropic API key to enable AI coaching and workout generation. Stored in this browser only.</div>
+    <input class="key-input" id="apiKeyInput" type="password" placeholder="sk-ant-api03-...">
+    <div class="key-err" id="keyErr">⚠ Invalid key format</div>
+    <button class="key-btn" onclick="saveKey()">ACTIVATE</button>
+    <div style="text-align:center;margin-top:10px;">
+      <button onclick="clearKey()" style="background:none;border:none;font-size:11px;color:#555;cursor:pointer;">clear saved key</button>
+    </div>
+  </div>
+</div>
+
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script>
+// ── API Key Management ────────────────────────────────────────────────────────
+let NEXA_KEY = localStorage.getItem('nexafit_key') || '';
+
+function saveKey() {
+  const v = document.getElementById('apiKeyInput').value.trim();
+  if (!v.startsWith('sk-')) { document.getElementById('keyErr').style.display = 'block'; return; }
+  NEXA_KEY = v;
+  localStorage.setItem('nexafit_key', v);
+  document.getElementById('keyModal').classList.remove('open');
+}
+function clearKey() { NEXA_KEY = ''; localStorage.removeItem('nexafit_key'); document.getElementById('apiKeyInput').value = ''; }
+function requireKey() {
+  if (!NEXA_KEY) { document.getElementById('keyModal').classList.add('open'); return false; }
+  return true;
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const todayFn = () => new Date().toISOString().split('T')[0];
+const todayLabel = () => new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+const timeNow = () => new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+const storage = {
+  get: (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+// ── Theme ────────────────────────────────────────────────────────────────────
+const LIGHT = {
+  bg:'#ffffff', card:'#f9f7f0', card2:'#f0ece0', border:'#e8e0cc',
+  gold:'#c9970c', gold2:'#a87d00', goldBg:'#fef9e7',
+  text:'#0a0a0a', muted:'#7a6a4a', danger:'#dc2626',
+  tabBg:'#0a0a0a', tabActive:'#c9970c', tabInactive:'#6b5a3a',
+  green:'#16a34a',
+};
+const DARK = {
+  bg:'#0a0a0a', card:'#141414', card2:'#1e1e1e', border:'#2a2a2a',
+  gold:'#f0b429', gold2:'#c9970c', goldBg:'#1a1500',
+  text:'#ffffff', muted:'#888877', danger:'#ff4444',
+  tabBg:'#0a0a0a', tabActive:'#f0b429', tabInactive:'#555544',
+  green:'#22c55e',
+};
+
+const makeCSS = (C) => ({
+  app: { background: C.bg, minHeight: '100vh', color: C.text, fontFamily: "'Trebuchet MS','Lucida Sans Unicode',sans-serif", paddingBottom: 80 },
+  header: { background: C.tabBg, padding: '20px 20px 16px', borderBottom: `2px solid ${C.gold}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+  tab: { position: 'fixed', bottom: 0, left: 0, right: 0, background: C.tabBg, borderTop: `2px solid ${C.gold}`, display: 'flex', zIndex: 100 },
+  tabBtn: (active) => ({ flex: 1, padding: '12px 4px 10px', background: active ? C.gold + '22' : 'none', border: 'none', color: active ? C.gold : C.tabInactive, cursor: 'pointer', fontSize: 10, fontWeight: active ? '800' : '500', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, transition: 'all 0.2s', borderTop: active ? `2px solid ${C.gold}` : '2px solid transparent' }),
+  card: (accent) => ({ background: C.card, border: `1px solid ${accent || C.border}`, borderRadius: 16, padding: '16px', marginBottom: 14 }),
+  btn: (variant='gold') => ({
+    background: variant === 'gold' ? `linear-gradient(135deg,${C.gold} 0%,${C.gold2} 100%)` : variant === 'ghost' ? 'transparent' : variant === 'green' ? C.green : C.card2,
+    color: variant === 'gold' || variant === 'green' ? '#000' : C.text,
+    border: variant === 'ghost' ? `1px solid ${C.border}` : 'none',
+    borderRadius: 12, padding: '12px 20px', fontWeight: '700', fontSize: 14, cursor: 'pointer', width: '100%', marginBottom: 10, letterSpacing: 0.5,
+  }),
+  label: { fontSize: 11, color: C.muted, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 6 },
+  h2: { fontSize: 20, fontWeight: '800', color: C.text, margin: '0 0 4px', letterSpacing: -0.5 },
+  h3: { fontSize: 15, fontWeight: '700', color: C.text, margin: '0 0 8px' },
+  input: { background: C.card2, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 14px', color: C.text, fontSize: 14, width: '100%', boxSizing: 'border-box', marginBottom: 10, outline: 'none' },
+});
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function askClaude(prompt, systemPrompt) {
+  if (!requireKey()) return null;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': NEXA_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6', max_tokens: 1000,
+        system: systemPrompt || 'You are a knowledgeable personal fitness coach. Be concise, practical, and motivating.',
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || res.status);
+    return data.content?.[0]?.text || "Sorry, couldn't get a response.";
+  } catch (e) {
+    return 'Connection error: ' + e.message;
+  }
+}
+
+async function generatePlan(user) {
+  const isWife = user === 'Wife';
+  const prompt = isWife
+    ? `Generate a weekly workout plan for a postpartum woman getting back into fitness. Home equipment only: 25lb dumbbells, ab roller, walking treadmill. Goals: rebuild strength, lose baby weight, general health. Max 25 minutes per workout. 3 days per week. Return ONLY a JSON object like: {"Monday":{"isRestDay":true,"restDayActivity":"10 min gentle walk"},"Tuesday":{"isRestDay":false,"workoutName":"Upper Body","targetMuscles":["Chest","Arms"],"duration":"20 min","exercises":[{"name":"Dumbbell Curl","sets":3,"reps":"12","weight":"15lb","modification":"Sit on chair if needed"}]},...} for all 7 days.`
+    : `Generate a weekly workout plan for a man wanting to build muscle, lose weight, and improve health. Has gym membership AND home equipment: chest press machine, 25lb dumbbells, ab roller, walking treadmill. 3-4 days per week, flexible. Return ONLY a JSON object like: {"Monday":{"isRestDay":false,"workoutName":"Chest & Triceps","targetMuscles":["Chest","Triceps"],"duration":"45 min","exercises":[{"name":"Bench Press","sets":4,"reps":"8-10","weight":"Start moderate","modification":"Use chest press machine at home"}]},"Tuesday":{"isRestDay":true,"restDayActivity":"20 min treadmill walk"},...} for all 7 days.`;
+  const res = await askClaude(prompt, 'Return only valid JSON, no markdown, no explanation.');
+  if (!res) return null;
+  try { const clean = res.replace(/```json|```/g, '').trim(); return JSON.parse(clean); } catch { return null; }
+}
+
+// ── React App ─────────────────────────────────────────────────────────────────
+const { useState, useEffect, useRef } = React;
+const h = React.createElement;
+
+function StatCard({ label, value, sub, accent, icon, C, css }) {
+  return h('div', { style: { ...css.card(accent), flex: 1, minWidth: 0, padding: '14px 12px' } },
+    h('div', { style: { fontSize: 20, marginBottom: 4 } }, icon),
+    h('div', { style: { fontSize: 11, color: C.muted, marginBottom: 2 } }, label),
+    h('div', { style: { fontSize: 18, fontWeight: '800', color: accent || C.text } }, value),
+    sub && h('div', { style: { fontSize: 11, color: C.muted, marginTop: 2 } }, sub),
+  );
+}
+
+function WaterRing({ current, goal, C }) {
+  const pct = Math.min(current / goal, 1);
+  const r = 54, cx = 64, cy = 64, stroke = 8;
+  const circ = 2 * Math.PI * r;
+  const dash = circ * pct;
+  return h('svg', { width: 128, height: 128 },
+    h('circle', { cx, cy, r, fill: 'none', stroke: C.card2, strokeWidth: stroke }),
+    h('circle', { cx, cy, r, fill: 'none', stroke: C.gold, strokeWidth: stroke, strokeDasharray: `${dash} ${circ}`, strokeLinecap: 'round', transform: `rotate(-90 ${cx} ${cy})`, style: { transition: 'stroke-dasharray 0.4s ease' } }),
+    h('text', { x: cx, y: cy - 6, textAnchor: 'middle', fill: C.gold, fontSize: 22, fontWeight: '800' }, current),
+    h('text', { x: cx, y: cy + 14, textAnchor: 'middle', fill: C.muted, fontSize: 12 }, `of ${goal}`),
+    h('text', { x: cx, y: cy + 28, textAnchor: 'middle', fill: C.muted, fontSize: 10 }, 'glasses'),
+  );
+}
+
+function AIChat({ user, onClose, C }) {
+  const [msgs, setMsgs] = useState([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const bottom = useRef(null);
+  const suggestions = ['How do I get the most from 25lb dumbbells?','What should I eat before my workout?','I only have 20 min — what should I do?','How do I stay consistent when life is busy?'];
+
+  const send = async (text) => {
+    const q = text || input.trim();
+    if (!q) return;
+    if (!requireKey()) return;
+    setInput('');
+    setMsgs(m => [...m, { role: 'user', text: q }]);
+    setLoading(true);
+    const sys = user === 'Wife'
+      ? 'You are a knowledgeable postpartum fitness coach. Be encouraging, concise, and always recommend consulting a doctor before new exercises.'
+      : 'You are a knowledgeable personal fitness coach for a man with a gym membership and home equipment (chest press, 25lb dumbbells, ab roller, treadmill). Goals: muscle, weight loss, health. Be concise and motivating.';
+    const reply = await askClaude(q, sys);
+    if (reply) setMsgs(m => [...m, { role: 'ai', text: reply }]);
+    setLoading(false);
+  };
+
+  useEffect(() => { bottom.current?.scrollIntoView({ behavior: 'smooth' }); }, [msgs]);
+
+  return h('div', { style: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 200, display: 'flex', flexDirection: 'column' } },
+    h('div', { style: { background: '#0a0a0a', borderBottom: `2px solid ${C.gold}`, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+      h('div', null,
+        h('div', { style: { fontWeight: '800', fontSize: 16, color: '#fff' } }, '🤖 AI Coach'),
+        h('div', { style: { fontSize: 12, color: C.muted } }, 'Powered by Claude'),
+      ),
+      h('button', { onClick: onClose, style: { background: 'none', border: 'none', color: C.muted, fontSize: 24, cursor: 'pointer' } }, '×'),
+    ),
+    h('div', { style: { flex: 1, overflowY: 'auto', padding: '16px', background: '#0a0a0a' } },
+      msgs.length === 0 && h('div', null,
+        h('div', { style: { color: C.muted, fontSize: 13, textAlign: 'center', marginBottom: 16 } }, 'Ask your AI coach anything 💪'),
+        ...suggestions.map(s => h('div', { key: s, onClick: () => send(s), style: { background: '#1a1a1a', border: `1px solid ${C.gold}44`, borderRadius: 10, padding: '10px 14px', marginBottom: 8, fontSize: 13, cursor: 'pointer', color: '#fff' } }, s)),
+      ),
+      ...msgs.map((m, i) => h('div', { key: i, style: { display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start', marginBottom: 12 } },
+        h('div', { style: { maxWidth: '80%', background: m.role === 'user' ? C.gold : '#1a1a1a', color: m.role === 'user' ? '#000' : '#fff', borderRadius: m.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px', padding: '10px 14px', fontSize: 14, lineHeight: 1.5, whiteSpace: 'pre-wrap' } }, m.text),
+      )),
+      loading && h('div', { style: { display: 'flex', gap: 6, padding: '10px 14px', background: '#1a1a1a', borderRadius: 16, width: 'fit-content' } },
+        ...[0,1,2].map(i => h('div', { key: i, style: { width: 8, height: 8, borderRadius: '50%', background: C.gold, animation: 'pulse 1s infinite', animationDelay: `${i*0.2}s` } })),
+      ),
+      h('div', { ref: bottom }),
+    ),
+    h('div', { style: { padding: '12px 16px', background: '#0a0a0a', borderTop: `1px solid ${C.gold}33`, display: 'flex', gap: 10 } },
+      h('input', { value: input, onChange: e => setInput(e.target.value), onKeyDown: e => e.key === 'Enter' && send(), placeholder: 'Ask your coach...', style: { background: '#1a1a1a', border: `1px solid ${C.gold}44`, borderRadius: 10, padding: '10px 14px', color: '#fff', fontSize: 14, flex: 1, outline: 'none' } }),
+      h('button', { onClick: () => send(), style: { background: C.gold, color: '#000', border: 'none', borderRadius: 10, padding: '10px 16px', fontWeight: '800', cursor: 'pointer' } }, '→'),
+    ),
+  );
+}
+
+function HomeTab({ user, waterData, setWaterData, plan, css, C }) {
+  const dateKey = todayFn();
+  const current = waterData[dateKey] || 0;
+  const goal = 8;
+  const dayPlan = plan ? plan[new Date().toLocaleDateString('en-US', { weekday: 'long' })] : null;
+  const logs = storage.get('workoutLog', []);
+  const now = new Date();
+  const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay());
+  const workoutsThisWeek = logs.filter(w => new Date(w.date) >= weekStart).length;
+
+  const logWater = () => {
+    const updated = { ...waterData, [dateKey]: Math.min(current + 1, 20) };
+    setWaterData(updated); storage.set('waterData', updated);
+  };
+
+  return h('div', { style: { padding: '20px 16px' } },
+    h('div', { style: css.label }, 'Welcome back'),
+    h('div', { style: { ...css.h2, marginBottom: 2 } }, user === 'Wife' ? 'Hey babe 💪' : 'Let\'s get it 🔥'),
+    h('div', { style: { color: C.muted, fontSize: 13, marginBottom: 20 } }, todayLabel()),
+    h('div', { style: { display: 'flex', gap: 10, marginBottom: 16 } },
+      h(StatCard, { label: 'Water', value: `${current}/${goal}`, icon: '💧', accent: C.gold, sub: 'glasses today', C, css }),
+      h(StatCard, { label: 'This Week', value: `${workoutsThisWeek}`, icon: '🏋️', accent: C.gold, sub: 'workouts done', C, css }),
+    ),
+    h('div', { style: css.card(C.gold + '44') },
+      h('div', { style: css.label }, "Today's Plan"),
+      !dayPlan ? h('div', { style: { color: C.muted, fontSize: 13 } }, 'Generate your workout plan in the Workout tab to see today\'s session here.')
+      : dayPlan.isRestDay
+        ? h('div', null, h('div', { style: { ...css.h3, color: C.gold } }, '🌿 Rest & Recovery'), h('div', { style: { fontSize: 13, color: C.muted } }, dayPlan.restDayActivity))
+        : h('div', null,
+            h('div', { style: { ...css.h3, color: C.gold } }, dayPlan.workoutName),
+            h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 } },
+              ...(dayPlan.targetMuscles || []).map(m => h('span', { key: m, style: { background: C.gold + '22', color: C.gold, borderRadius: 20, padding: '2px 10px', fontSize: 11 } }, m)),
+            ),
+            h('div', { style: { fontSize: 13, color: C.muted } }, `⏱ ${dayPlan.duration}`),
+          ),
+    ),
+    h('div', { style: css.card() },
+      h('div', { style: css.label }, 'Hydration'),
+      h('div', { style: { display: 'flex', alignItems: 'center', gap: 20 } },
+        h(WaterRing, { current, goal, C }),
+        h('div', { style: { flex: 1 } },
+          h('div', { style: { fontSize: 13, color: C.muted, marginBottom: 12 } }, current >= goal ? '🎉 Daily goal crushed!' : `${goal - current} more glasses to go`),
+          h('button', { onClick: logWater, style: css.btn('gold') }, '+ Log a Glass'),
+        ),
+      ),
+    ),
+  );
+}
+
+function WorkoutTab({ user, plan, setPlan, css, C }) {
+  const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [activeWorkout, setActiveWorkout] = useState(null);
+  const [currentEx, setCurrentEx] = useState(0);
+
+  const generate = async () => {
+    if (!requireKey()) return;
+    setLoading(true);
+    const result = await generatePlan(user);
+    if (result) { setPlan(result); storage.set(`plan_${user}`, result); }
+    setLoading(false);
+  };
+
+  if (activeWorkout) {
+    const ex = activeWorkout.exercises?.[currentEx];
+    const isLast = currentEx >= (activeWorkout.exercises?.length || 1) - 1;
+    return h('div', { style: { padding: 20 } },
+      h('div', { style: { ...css.card(`${C.gold}66`), textAlign: 'center' } },
+        h('div', { style: { color: C.gold, fontSize: 12, letterSpacing: 2, marginBottom: 8 } }, 'ACTIVE WORKOUT'),
+        h('div', { style: { fontSize: 22, fontWeight: '800', marginBottom: 4 } }, activeWorkout.workoutName),
+        h('div', { style: { color: C.muted, fontSize: 13 } }, `Exercise ${currentEx + 1} of ${activeWorkout.exercises?.length}`),
+      ),
+      ex && h('div', { style: css.card(C.gold) },
+        h('div', { style: { fontSize: 24, fontWeight: '800', color: C.gold, marginBottom: 8 } }, ex.name),
+        h('div', { style: { display: 'flex', gap: 16, marginBottom: 12 } },
+          h('div', { style: { textAlign: 'center' } }, h('div', { style: { fontSize: 22, fontWeight: '800' } }, ex.sets), h('div', { style: { fontSize: 11, color: C.muted } }, 'SETS')),
+          h('div', { style: { textAlign: 'center' } }, h('div', { style: { fontSize: 22, fontWeight: '800' } }, ex.reps), h('div', { style: { fontSize: 11, color: C.muted } }, 'REPS')),
+          h('div', { style: { textAlign: 'center' } }, h('div', { style: { fontSize: 16, fontWeight: '800' } }, ex.weight), h('div', { style: { fontSize: 11, color: C.muted } }, 'WEIGHT')),
+        ),
+        ex.modification && h('div', { style: { background: C.gold + '22', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: C.gold } }, `💡 ${ex.modification}`),
+      ),
+      h('button', {
+        onClick: () => {
+          if (isLast) {
+            const log = storage.get('workoutLog', []);
+            log.push({ date: todayFn(), name: activeWorkout.workoutName });
+            storage.set('workoutLog', log);
+            setActiveWorkout(null); setCurrentEx(0);
+          } else { setCurrentEx(c => c + 1); }
+        },
+        style: css.btn('gold'),
+      }, isLast ? '✅ Complete Workout' : 'Next Exercise →'),
+      h('button', { onClick: () => { setActiveWorkout(null); setCurrentEx(0); }, style: css.btn('ghost') }, 'End Workout'),
+    );
+  }
+
+  return h('div', { style: { padding: '20px 16px' } },
+    h('div', { style: { ...css.h2, marginBottom: 4 } }, 'Workout Plan'),
+    h('div', { style: { color: C.muted, fontSize: 13, marginBottom: 16 } }, user === 'Wife' ? 'Home • Postpartum Friendly' : 'Gym + Home'),
+    !plan
+      ? h('div', { style: css.card() },
+          h('div', { style: { textAlign: 'center', padding: '20px 0' } },
+            h('div', { style: { fontSize: 48, marginBottom: 12 } }, '🏋️'),
+            h('div', { style: { fontSize: 16, fontWeight: '700', marginBottom: 8 } }, 'No plan yet'),
+            h('div', { style: { color: C.muted, fontSize: 13, marginBottom: 20 } }, 'Let AI build your personalized weekly plan'),
+            h('button', { onClick: generate, disabled: loading, style: css.btn('gold') }, loading ? '⚡ Building your plan...' : '✨ Generate My Plan'),
+          ),
+        )
+      : h('div', null,
+          h('button', { onClick: generate, disabled: loading, style: css.btn('ghost') }, loading ? 'Regenerating...' : '↺ Regenerate Plan'),
+          ...DAYS.map(day => {
+            const d = plan[day]; if (!d) return null;
+            const isOpen = selected === day;
+            return h('div', { key: day, style: css.card(d.isRestDay ? C.border : C.gold + '44') },
+              h('div', { onClick: () => setSelected(isOpen ? null : day), style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' } },
+                h('div', null,
+                  h('div', { style: { fontSize: 12, color: C.muted, marginBottom: 2 } }, day.toUpperCase()),
+                  h('div', { style: { fontWeight: '700', color: d.isRestDay ? C.muted : C.text } }, d.isRestDay ? '🌿 Rest Day' : d.workoutName),
+                  !d.isRestDay && h('div', { style: { fontSize: 12, color: C.muted } }, `⏱ ${d.duration}`),
+                ),
+                h('span', { style: { color: C.muted } }, isOpen ? '▲' : '▼'),
+              ),
+              isOpen && !d.isRestDay && h('div', { style: { marginTop: 12 } },
+                h('div', { style: { display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 } },
+                  ...(d.targetMuscles || []).map(m => h('span', { key: m, style: { background: C.gold + '22', color: C.gold, borderRadius: 20, padding: '2px 10px', fontSize: 11 } }, m)),
+                ),
+                ...(d.exercises || []).map((ex, i) => h('div', { key: i, style: { background: C.card2, borderRadius: 10, padding: '10px 12px', marginBottom: 8 } },
+                  h('div', { style: { fontWeight: '600', marginBottom: 4 } }, ex.name),
+                  h('div', { style: { fontSize: 12, color: C.muted } }, `${ex.sets} sets × ${ex.reps} reps @ ${ex.weight}`),
+                )),
+                h('button', { onClick: () => setActiveWorkout(d), style: css.btn('gold') }, '▶ Start Workout'),
+              ),
+              isOpen && d.isRestDay && h('div', { style: { marginTop: 10, fontSize: 13, color: C.muted } }, d.restDayActivity),
+            );
+          }),
+        ),
+  );
+}
+
+function LogTab({ user, css, C }) {
+  const dateKey = todayFn();
+  const [waterData, setWaterData] = useState(storage.get('waterData', {}));
+  const [meals, setMeals] = useState(storage.get(`meals_${user}_${dateKey}`, []));
+  const [mealForm, setMealForm] = useState({ name: '', calories: '', protein: '', type: 'Lunch' });
+  const [showForm, setShowForm] = useState(false);
+  const current = waterData[dateKey] || 0;
+
+  const logWater = (delta) => {
+    const updated = { ...waterData, [dateKey]: Math.max(0, Math.min((waterData[dateKey] || 0) + delta, 20)) };
+    setWaterData(updated); storage.set('waterData', updated);
+  };
+
+  const addMeal = () => {
+    if (!mealForm.name) return;
+    const updated = [...meals, { ...mealForm, time: timeNow() }];
+    setMeals(updated); storage.set(`meals_${user}_${dateKey}`, updated);
+    setMealForm({ name: '', calories: '', protein: '', type: 'Lunch' }); setShowForm(false);
+  };
+
+  const totalCals = meals.reduce((s, m) => s + (parseInt(m.calories) || 0), 0);
+
+  return h('div', { style: { padding: '20px 16px' } },
+    h('div', { style: { ...css.h2, marginBottom: 16 } }, 'Daily Log'),
+    h('div', { style: css.card() },
+      h('div', { style: css.label }, 'Water Intake'),
+      h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } },
+        h('button', { onClick: () => logWater(-1), style: { background: C.card2, border: `1px solid ${C.border}`, color: C.text, borderRadius: 10, width: 44, height: 44, fontSize: 20, cursor: 'pointer' } }, '−'),
+        h(WaterRing, { current, goal: 8, C }),
+        h('button', { onClick: () => logWater(1), style: { background: C.green, border: 'none', color: '#000', borderRadius: 10, width: 44, height: 44, fontSize: 20, fontWeight: '800', cursor: 'pointer' } }, '+'),
+      ),
+    ),
+    h('div', { style: css.card() },
+      h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 } },
+        h('div', null,
+          h('div', { style: css.label }, 'Food Log'),
+          h('div', { style: { fontSize: 20, fontWeight: '800', color: C.green } }, `${totalCals} `, h('span', { style: { fontSize: 13, color: C.muted } }, 'kcal today')),
+        ),
+        h('button', { onClick: () => setShowForm(!showForm), style: { background: C.green, color: '#000', border: 'none', borderRadius: 10, padding: '8px 14px', fontWeight: '700', cursor: 'pointer' } }, '+ Add'),
+      ),
+      showForm && h('div', { style: { background: C.card2, borderRadius: 12, padding: 14, marginBottom: 12 } },
+        h('input', { placeholder: 'Meal name', value: mealForm.name, onChange: e => setMealForm(f => ({ ...f, name: e.target.value })), style: css.input }),
+        h('div', { style: { display: 'flex', gap: 8 } },
+          h('input', { placeholder: 'Calories', type: 'number', value: mealForm.calories, onChange: e => setMealForm(f => ({ ...f, calories: e.target.value })), style: { ...css.input, flex: 1 } }),
+          h('input', { placeholder: 'Protein (g)', type: 'number', value: mealForm.protein, onChange: e => setMealForm(f => ({ ...f, protein: e.target.value })), style: { ...css.input, flex: 1 } }),
+        ),
+        h('select', { value: mealForm.type, onChange: e => setMealForm(f => ({ ...f, type: e.target.value })), style: css.input },
+          ...['Breakfast','Lunch','Dinner','Snack'].map(t => h('option', { key: t }, t)),
+        ),
+        h('button', { onClick: addMeal, style: css.btn('green') }, 'Save Meal'),
+      ),
+      ...meals.map((m, i) => h('div', { key: i, style: { background: C.card2, borderRadius: 10, padding: '10px 14px', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+        h('div', null, h('div', { style: { fontWeight: '600', fontSize: 14 } }, m.name), h('div', { style: { fontSize: 11, color: C.muted } }, `${m.type} • ${m.time}`)),
+        h('div', { style: { textAlign: 'right' } },
+          h('div', { style: { color: C.green, fontWeight: '700' } }, `${m.calories} kcal`),
+          m.protein && h('div', { style: { fontSize: 11, color: C.muted } }, `${m.protein}g protein`),
+        ),
+      )),
+      meals.length === 0 && h('div', { style: { color: C.muted, fontSize: 13, textAlign: 'center', padding: '10px 0' } }, 'No meals logged yet today'),
+    ),
+  );
+}
+
+function NutritionTab({ user, css, C }) {
+  const [tips, setTips] = useState(storage.get(`nutrition_${user}`, null));
+  const [loading, setLoading] = useState(false);
+  const habits = ['Ate enough protein today','Drank enough water','Avoided processed food','Ate veggies with each meal','Had a post-workout meal'];
+  const [checked, setChecked] = useState(storage.get(`habits_${user}_${todayFn()}`, {}));
+
+  const toggleHabit = (h) => {
+    const updated = { ...checked, [h]: !checked[h] };
+    setChecked(updated); storage.set(`habits_${user}_${todayFn()}`, updated);
+  };
+
+  const getTips = async () => {
+    if (!requireKey()) return;
+    setLoading(true);
+    const prompt = user === 'Wife'
+      ? 'Give personalized nutrition advice for a postpartum woman focusing on rebuilding strength and losing baby weight. Include: recommended daily calories, protein target, 3 specific food recommendations, pre and post workout nutrition tips. Be concise and practical.'
+      : 'Give personalized nutrition advice for a man wanting to build muscle, lose weight, and improve health. He works out 3-5x per week. Include: recommended daily calories, protein target, 3 specific food recommendations, pre and post workout nutrition tips. Be concise and practical.';
+    const result = await askClaude(prompt);
+    if (result) { setTips(result); storage.set(`nutrition_${user}`, result); }
+    setLoading(false);
+  };
+
+  return h('div', { style: { padding: '20px 16px' } },
+    h('div', { style: { ...css.h2, marginBottom: 16 } }, 'Nutrition'),
+    h('div', { style: css.card(C.gold + '44') },
+      h('div', { style: css.label }, 'Daily Habits'),
+      ...habits.map(habit => h('div', { key: habit, onClick: () => toggleHabit(habit), style: { display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: `1px solid ${C.border}`, cursor: 'pointer' } },
+        h('div', { style: { width: 24, height: 24, borderRadius: 6, border: `2px solid ${checked[habit] ? C.gold : C.border}`, background: checked[habit] ? C.gold : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#000', fontWeight: '800', fontSize: 13 } }, checked[habit] ? '✓' : ''),
+        h('span', { style: { fontSize: 14, color: checked[habit] ? C.muted : C.text, textDecoration: checked[habit] ? 'line-through' : 'none' } }, habit),
+      )),
+    ),
+    h('div', { style: css.card() },
+      h('div', { style: css.label }, 'AI Nutrition Guidance'),
+      !tips
+        ? h('button', { onClick: getTips, disabled: loading, style: css.btn('green') }, loading ? 'Getting tips...' : '✨ Get My Nutrition Tips')
+        : h('div', null,
+            h('div', { style: { fontSize: 13, color: C.text, lineHeight: 1.7, whiteSpace: 'pre-wrap' } }, tips),
+            h('button', { onClick: getTips, disabled: loading, style: { ...css.btn('ghost'), marginTop: 12 } }, '↺ Refresh Tips'),
+          ),
+    ),
+  );
+}
+
+function ProgressTab({ user, css, C }) {
+  const logs = storage.get('workoutLog', []);
+  const DAYS_WEEK = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const now = new Date();
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now); d.setDate(now.getDate() - now.getDay() + i);
+    return d.toISOString().split('T')[0];
+  });
+  const worked = weekDays.map(d => logs.some(l => l.date === d));
+  const streak = worked.filter(Boolean).length;
+
+  return h('div', { style: { padding: '20px 16px' } },
+    h('div', { style: { ...css.h2, marginBottom: 16 } }, 'Progress'),
+    h('div', { style: css.card(C.green + '44') },
+      h('div', { style: css.label }, 'This Week'),
+      h('div', { style: { display: 'flex', gap: 6, marginTop: 8 } },
+        ...DAYS_WEEK.map((d, i) => h('div', { key: d, style: { flex: 1, textAlign: 'center' } },
+          h('div', { style: { width: '100%', height: 60, background: worked[i] ? C.green : C.card2, borderRadius: 8, marginBottom: 6, border: `1px solid ${worked[i] ? C.green : C.border}`, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 6 } }, worked[i] && h('span', { style: { fontSize: 16 } }, '✓')),
+          h('div', { style: { fontSize: 10, color: C.muted } }, d),
+        )),
+      ),
+    ),
+    h('div', { style: { display: 'flex', gap: 10, marginBottom: 14 } },
+      h(StatCard, { label: 'Streak', value: `${streak}`, icon: '🔥', accent: C.gold, sub: 'days this week', C, css }),
+      h(StatCard, { label: 'Total', value: `${logs.length}`, icon: '🏆', accent: C.green, sub: 'workouts logged', C, css }),
+    ),
+    h('div', { style: css.card() },
+      h('div', { style: css.label }, 'Recent Workouts'),
+      logs.length === 0 && h('div', { style: { color: C.muted, fontSize: 13 } }, 'No workouts logged yet. Start your first session!'),
+      ...[...logs].reverse().slice(0, 5).map((l, i) => h('div', { key: i, style: { background: C.card2, borderRadius: 10, padding: '10px 14px', marginBottom: 8, display: 'flex', justifyContent: 'space-between' } },
+        h('div', { style: { fontWeight: '600', fontSize: 14 } }, l.name),
+        h('div', { style: { fontSize: 12, color: C.muted } }, l.date),
+      )),
+    ),
+  );
+}
+
+function NexaFit() {
+  const [tab, setTab] = useState('home');
+  const [user, setUser] = useState(storage.get('activeUser', 'Husband'));
+  const [showChat, setShowChat] = useState(false);
+  const [waterData, setWaterData] = useState(storage.get('waterData', {}));
+  const [plan, setPlan] = useState(storage.get(`plan_${storage.get('activeUser','Husband')}`, null));
+  const [darkMode, setDarkMode] = useState(storage.get('darkMode', true));
+
+  const theme = darkMode ? DARK : LIGHT;
+  const css = makeCSS(theme);
+  const C = theme;
+
+  useEffect(() => { storage.set('activeUser', user); setPlan(storage.get(`plan_${user}`, null)); }, [user]);
+  useEffect(() => { storage.set('darkMode', darkMode); }, [darkMode]);
+
+  const tabs = [
+    { id: 'home', icon: '🏠', label: 'Home' },
+    { id: 'workout', icon: '💪', label: 'Workout' },
+    { id: 'log', icon: '📋', label: 'Log' },
+    { id: 'nutrition', icon: '🥗', label: 'Nutrition' },
+    { id: 'progress', icon: '📈', label: 'Progress' },
+  ];
+
+  return h('div', { style: css.app },
+    // Header
+    h('div', { style: css.header },
+      h('div', { style: { display: 'flex', alignItems: 'center', gap: 12 } },
+        h('div', null,
+          h('div', { style: { fontSize: 10, color: theme.gold, letterSpacing: 4, textTransform: 'uppercase', fontWeight: '700' } }, 'Nexa'),
+          h('div', { style: { fontSize: 24, fontWeight: '900', color: '#ffffff', letterSpacing: -1, lineHeight: 1 } }, 'FIT'),
+        ),
+        h('div', { style: { width: 2, height: 32, background: theme.gold, borderRadius: 2 } }),
+        h('div', { style: { fontSize: 11, color: '#aaa' } }, user === 'Wife' ? '👩 Wife\'s Plan' : '👨 My Plan'),
+      ),
+      h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+        h('button', { onClick: () => setDarkMode(d => !d), style: { background: darkMode ? theme.gold + '33' : '#ffffff22', border: `1px solid ${theme.gold}44`, borderRadius: 20, padding: '5px 12px', color: darkMode ? theme.gold : '#ffffff', fontSize: 11, fontWeight: '700', cursor: 'pointer' } }, darkMode ? '☀️ Light' : '🌙 Dark'),
+        ...['Husband','Wife'].map(u => h('button', { key: u, onClick: () => setUser(u), style: { background: user === u ? theme.gold : 'transparent', color: user === u ? '#000' : '#ffffff88', border: `1px solid ${user === u ? theme.gold : '#ffffff22'}`, borderRadius: 20, padding: '5px 12px', fontSize: 11, fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s' } }, u === 'Husband' ? 'Me' : 'Wife')),
+      ),
+    ),
+    // Content
+    h('div', { style: { minHeight: 'calc(100vh - 140px)', overflowY: 'auto' } },
+      tab === 'home' && h(HomeTab, { user, waterData, setWaterData, plan, css, C }),
+      tab === 'workout' && h(WorkoutTab, { user, plan, setPlan, css, C }),
+      tab === 'log' && h(LogTab, { user, css, C }),
+      tab === 'nutrition' && h(NutritionTab, { user, css, C }),
+      tab === 'progress' && h(ProgressTab, { user, css, C }),
+    ),
+    // AI Coach Button
+    h('button', { onClick: () => { if (requireKey()) setShowChat(true); }, style: { position: 'fixed', bottom: 90, right: 20, width: 54, height: 54, borderRadius: '50%', background: `linear-gradient(135deg,${theme.gold} 0%,${theme.gold2} 100%)`, border: 'none', color: '#000', fontSize: 22, cursor: 'pointer', boxShadow: `0 4px 20px ${theme.gold}66`, zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800' } }, '🤖'),
+    // Tab Bar
+    h('div', { style: css.tab },
+      ...tabs.map(t => h('button', { key: t.id, onClick: () => setTab(t.id), style: css.tabBtn(tab === t.id) },
+        h('span', { style: { fontSize: 18 } }, t.icon),
+        h('span', { style: { fontSize: 10, fontWeight: tab === t.id ? '800' : '500' } }, t.label),
+      )),
+    ),
+    // AI Chat
+    showChat && h(AIChat, { user, onClose: () => setShowChat(false), C: theme }),
+  );
+}
+
+ReactDOM.render(React.createElement(NexaFit), document.getElementById('root'));
+
+// Show key modal if no key
+if (!NEXA_KEY) document.getElementById('keyModal').classList.add('open');
+</script>
+</body>
+</html>
