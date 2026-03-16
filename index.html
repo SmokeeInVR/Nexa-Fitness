@@ -5,19 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>NexaFit</title>
 <style>
-:root {
-  --bg:#0a0a0a; --card:#141414; --card2:#1e1e1e; --border:#2a2a2a;
-  --text:#ffffff; --muted:#888877; --dim:#444433;
-  --gold:#D4A53E; --gold2:#a87d00; --green:#22c55e; --red:#ef4444; --blue:#60a5fa; --purple:#a78bfa;
+:root{
+  --bg:#0a0a0a;--card:#141414;--card2:#1e1e1e;--border:#2a2a2a;
+  --text:#ffffff;--muted:#888877;--dim:#444433;
+  --gold:#D4A53E;--gold2:#a87d00;--green:#22c55e;--red:#ef4444;--blue:#60a5fa;--purple:#a78bfa;--teal:#14b8a6;
   --radius:12px;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;overflow:hidden;}
 body{background:var(--bg);color:var(--text);font-family:'Trebuchet MS','Lucida Sans Unicode',sans-serif;}
-::-webkit-scrollbar{width:3px;} ::-webkit-scrollbar-thumb{background:var(--border);}
-@keyframes pulse{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1)}}
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:var(--border);}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 @keyframes glow{0%,100%{box-shadow:0 0 8px rgba(212,165,62,0.3)}50%{box-shadow:0 0 20px rgba(212,165,62,0.6)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* KEY MODAL */
 .key-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:1000;align-items:center;justify-content:center;padding:20px;}
@@ -25,60 +26,78 @@ body{background:var(--bg);color:var(--text);font-family:'Trebuchet MS','Lucida S
 .key-sheet{background:#141414;border:1px solid #2a2a2a;border-top:2px solid var(--gold);border-radius:14px;padding:28px 24px;max-width:380px;width:100%;}
 .key-input{width:100%;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:8px;padding:10px 12px;color:#fff;font-family:monospace;font-size:12px;outline:none;margin:8px 0;}
 .key-input:focus{border-color:var(--gold);}
-.key-btn{width:100%;padding:12px;background:var(--gold);border:none;border-radius:8px;color:#000;font-weight:900;font-size:14px;cursor:pointer;letter-spacing:1px;}
-.key-err{display:none;font-size:11px;color:var(--red);margin-top:4px;}
+.key-btn{width:100%;padding:12px;background:var(--gold);border:none;border-radius:8px;color:#000;font-weight:900;font-size:14px;cursor:pointer;}
 
-/* SETUP SCREEN */
+/* SETUP */
 .setup-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:500;overflow-y:auto;padding:24px 20px 40px;}
 .setup-screen.open{display:block;}
-.eq-option{padding:14px;background:var(--card2);border:2px solid var(--border);border-radius:10px;cursor:pointer;margin-bottom:8px;transition:all 0.2s;}
-.eq-option.selected{border-color:var(--gold);background:rgba(212,165,62,0.08);}
-.goal-btn{padding:7px 14px;border:1px solid var(--border);border-radius:20px;background:var(--card2);color:var(--muted);font-size:12px;cursor:pointer;transition:all 0.2s;}
-.goal-btn.on{border-color:var(--gold);background:rgba(212,165,62,0.15);color:var(--gold);}
-.profile-user-btn{flex:1;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--card2);color:var(--muted);font-weight:700;cursor:pointer;transition:all 0.2s;}
-.profile-user-btn.on{border-color:var(--gold);background:rgba(212,165,62,0.15);color:var(--gold);}
+.eq-opt{padding:14px;background:var(--card2);border:2px solid var(--border);border-radius:10px;cursor:pointer;margin-bottom:8px;transition:all 0.2s;}
+.eq-opt.on{border-color:var(--gold);background:rgba(212,165,62,0.08);}
+.pill-btn{padding:7px 14px;border:1px solid var(--border);border-radius:20px;background:var(--card2);color:var(--muted);font-size:12px;cursor:pointer;transition:all 0.2s;}
+.pill-btn.on{border-color:var(--gold);background:rgba(212,165,62,0.15);color:var(--gold);}
+.pu-btn{flex:1;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--card2);color:var(--muted);font-weight:700;cursor:pointer;transition:all 0.2s;}
+.pu-btn.on{border-color:var(--gold);background:rgba(212,165,62,0.15);color:var(--gold);}
 
 /* LAYOUT */
 .app{display:flex;flex-direction:column;height:100vh;}
 .header{background:#0a0a0a;border-bottom:2px solid var(--gold);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
 .content{flex:1;overflow-y:auto;padding-bottom:80px;}
 .tab-bar{position:fixed;bottom:0;left:0;right:0;background:#0a0a0a;border-top:2px solid var(--gold);display:flex;z-index:100;}
-.tab-btn{flex:1;padding:10px 4px 8px;background:none;border:none;color:var(--dim);cursor:pointer;font-size:10px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;transition:all 0.2s;border-top:2px solid transparent;}
+.tab-btn{flex:1;padding:10px 4px 8px;background:none;border:none;color:var(--dim);cursor:pointer;font-size:9px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;transition:all 0.2s;border-top:2px solid transparent;}
 .tab-btn.active{color:var(--gold);background:rgba(212,165,62,0.08);border-top-color:var(--gold);}
+.tab-icon{font-size:16px;}
 
 /* CARDS */
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;animation:fadeIn 0.3s ease;}
 .card-gold{border-color:rgba(212,165,62,0.35);}
+.card-green{border-color:rgba(34,197,94,0.3);}
+.card-purple{border-color:rgba(167,139,250,0.3);}
+.card-teal{border-color:rgba(20,184,166,0.3);}
 .lbl{font-size:10px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;}
 .h2{font-size:20px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;}
 
 /* BUTTONS */
-.btn{width:100%;padding:13px;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-bottom:10px;letter-spacing:0.5px;transition:opacity 0.2s;}
+.btn{width:100%;padding:13px;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-bottom:10px;transition:opacity 0.2s;}
 .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
 .btn-green{background:var(--green);color:#000;}
+.btn-blue{background:var(--blue);color:#000;}
+.btn-purple{background:var(--purple);color:#000;}
+.btn-teal{background:var(--teal);color:#000;}
+.btn-red{background:var(--red);color:#fff;}
 .btn:disabled{opacity:0.5;cursor:not-allowed;}
 
 /* PROGRESS */
 .prog-bg{height:8px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;margin:6px 0;}
 .prog-fill{height:100%;border-radius:4px;transition:width 0.4s;}
 
-/* WEEK SCHEDULE */
-.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:10px;}
-.week-day{text-align:center;cursor:pointer;}
-.week-day-circle{width:36px;height:36px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font-size:10px;font-weight:700;transition:all 0.2s;}
-.week-day.today .week-day-circle{border-color:var(--gold);color:var(--gold);}
-.week-day.done .week-day-circle{background:rgba(212,165,62,0.2);border-color:var(--gold);}
-.week-day.rest .week-day-circle{background:var(--card2);border-color:var(--dim);}
-.week-day-label{font-size:9px;color:var(--muted);}
-.week-day-focus{font-size:8px;color:var(--muted);margin-top:2px;line-height:1.2;}
+/* MACRO BARS */
+.macro-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.macro-lbl{font-size:11px;color:var(--muted);width:60px;flex-shrink:0;}
+.macro-bar{flex:1;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;}
+.macro-fill{height:100%;border-radius:3px;transition:width 0.4s;}
+.macro-val{font-size:11px;font-weight:700;width:50px;text-align:right;flex-shrink:0;}
 
-/* DAY SCHEDULE CARD */
+/* FASTING TIMER */
+.fast-ring{position:relative;display:flex;align-items:center;justify-content:center;}
+.fast-status{position:absolute;text-align:center;}
+
+/* MEDITATION TIMER */
+.med-circle{width:160px;height:160px;border-radius:50%;border:3px solid rgba(167,139,250,0.3);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto;transition:all 0.5s;cursor:pointer;}
+.med-circle.active{border-color:var(--purple);box-shadow:0 0 30px rgba(167,139,250,0.3);animation:glow 2s infinite;}
+.med-time{font-size:36px;font-weight:900;color:var(--purple);}
+.med-sub{font-size:11px;color:var(--muted);letter-spacing:2px;}
+
+/* ACTIVE WORKOUT */
+.active-ex{background:var(--card);border:2px solid var(--gold);border-radius:14px;padding:20px;text-align:center;margin-bottom:12px;animation:glow 2s infinite;}
+.ex-stats{display:flex;gap:16px;justify-content:center;margin:12px 0;}
+.ex-stat-val{font-size:24px;font-weight:900;}
+.ex-stat-lbl{font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:2px;}
+
+/* SCHED */
 .sched-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
-.sched-day-name{font-size:11px;font-weight:700;width:28px;color:var(--muted);}
-.sched-day-name.today{color:var(--gold);}
-.sched-focus{flex:1;font-size:13px;font-weight:600;}
-.sched-tags{display:flex;gap:4px;flex-wrap:wrap;}
+.sched-day{font-size:11px;font-weight:700;width:28px;color:var(--muted);}
+.sched-day.today{color:var(--gold);}
 .tag{font-size:9px;padding:2px 7px;border-radius:10px;font-weight:600;}
 .tag-muscle{background:rgba(212,165,62,0.15);color:var(--gold);}
 .tag-cardio{background:rgba(34,197,94,0.15);color:var(--green);}
@@ -91,11 +110,15 @@ body{background:var(--bg);color:var(--text);font-family:'Trebuchet MS','Lucida S
 .bp-check{width:20px;height:20px;border-radius:5px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;}
 .bp-item.done .bp-check{background:var(--gold);border-color:var(--gold);color:#000;}
 
-/* ACTIVE WORKOUT */
-.active-ex{background:var(--card);border:2px solid var(--gold);border-radius:14px;padding:20px;text-align:center;margin-bottom:12px;animation:glow 2s infinite;}
-.ex-stats{display:flex;gap:16px;justify-content:center;margin:12px 0;}
-.ex-stat-val{font-size:24px;font-weight:900;}
-.ex-stat-lbl{font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:2px;}
+/* SCAN LOADING */
+.scan-loading{display:flex;flex-direction:column;align-items:center;padding:20px;gap:10px;}
+.spinner{width:32px;height:32px;border:3px solid rgba(212,165,62,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;}
+
+/* FORM */
+.form-input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;margin-bottom:8px;}
+.form-input:focus{border-color:var(--gold);}
+.form-select{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;margin-bottom:8px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 
 /* HABIT */
 .habit-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);cursor:pointer;}
@@ -103,27 +126,22 @@ body{background:var(--bg);color:var(--text);font-family:'Trebuchet MS','Lucida S
 .habit-row.done .habit-check{background:var(--gold);border-color:var(--gold);color:#000;}
 .habit-row.done span{text-decoration:line-through;color:var(--muted);}
 
-/* MEALS */
+/* MEAL ROW */
 .meal-row{background:var(--card2);border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
-.form-input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;margin-bottom:8px;}
-.form-input:focus{border-color:var(--gold);}
-.form-select{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;margin-bottom:8px;}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-
-/* NUDGE */
-.nudge{background:rgba(212,165,62,0.08);border:1px solid rgba(212,165,62,0.25);border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:var(--gold);}
 
 /* AI CHAT */
-.chat-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:200;display:flex;flex-direction:column;}
-.chat-msgs{flex:1;overflow-y:auto;padding:14px;}
-.bubble-user{background:var(--gold);color:#000;border-radius:14px 14px 3px 14px;padding:10px 14px;max-width:80%;font-size:14px;line-height:1.5;margin-bottom:10px;margin-left:auto;}
-.bubble-ai{background:#1a1a1a;color:#fff;border-radius:14px 14px 14px 3px;padding:10px 14px;max-width:80%;font-size:14px;line-height:1.5;margin-bottom:10px;border:1px solid var(--border);white-space:pre-wrap;}
+.chat-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.96);z-index:200;display:flex;flex-direction:column;}
+.bubble-user{background:var(--gold);color:#000;border-radius:14px 14px 3px 14px;padding:10px 14px;max-width:82%;font-size:14px;line-height:1.5;margin-bottom:10px;margin-left:auto;}
+.bubble-ai{background:#1a1a1a;color:#fff;border-radius:14px 14px 14px 3px;padding:10px 14px;max-width:82%;font-size:13px;line-height:1.6;margin-bottom:10px;border:1px solid var(--border);white-space:pre-wrap;}
 .chat-input-row{padding:12px 14px;background:#0a0a0a;border-top:1px solid var(--border);display:flex;gap:10px;flex-shrink:0;}
 .chat-input{flex:1;background:#1a1a1a;border:1px solid rgba(212,165,62,0.3);border-radius:10px;padding:10px 14px;color:#fff;font-size:14px;outline:none;}
 .chat-send{background:var(--gold);color:#000;border:none;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer;}
 
 /* FAB */
 .fab{position:fixed;bottom:86px;right:16px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;color:#000;font-size:20px;cursor:pointer;box-shadow:0 4px 20px rgba(212,165,62,0.4);z-index:90;}
+
+/* NUDGE */
+.nudge{background:rgba(212,165,62,0.08);border:1px solid rgba(212,165,62,0.25);border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:var(--gold);}
 </style>
 </head>
 <body>
@@ -135,7 +153,7 @@ body{background:var(--bg);color:var(--text);font-family:'Trebuchet MS','Lucida S
     <div style="font-size:22px;font-weight:900;color:#fff;margin-bottom:14px;">FIT</div>
     <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5;">Enter your Anthropic API key. Saved once — works everywhere.</div>
     <input class="key-input" id="apiKeyInput" type="password" placeholder="sk-ant-api03-...">
-    <div class="key-err" id="keyErr">⚠ Must start with sk-</div>
+    <div id="keyErr" style="display:none;font-size:11px;color:var(--red);margin-bottom:6px;">⚠ Must start with sk-</div>
     <button class="key-btn" onclick="saveKey()">ACTIVATE</button>
     <div id="storedKeyHint" style="display:none;font-size:10px;color:rgba(212,165,62,0.4);text-align:center;margin-top:8px;"></div>
     <button onclick="clearKey()" style="display:block;margin:6px auto 0;background:none;border:none;font-size:10px;color:#444;cursor:pointer;">clear key</button>
@@ -147,42 +165,60 @@ body{background:var(--bg);color:var(--text);font-family:'Trebuchet MS','Lucida S
   <div style="max-width:480px;margin:0 auto;">
     <div style="font-size:9px;color:var(--gold);letter-spacing:4px;font-weight:700;">NEXA</div>
     <div style="font-size:26px;font-weight:900;color:#fff;margin-bottom:4px;">FIT</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:24px;">Set up your profile so AI builds the right workouts for you.</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:24px;">Set up your profile so AI builds the right workouts and nutrition for you.</div>
 
     <div style="font-size:10px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">Profile</div>
     <div style="display:flex;gap:8px;margin-bottom:20px;">
-      <button class="profile-user-btn on" id="pBtn-Husband" onclick="setProfileUser('Husband')">👨 Me (Husband)</button>
-      <button class="profile-user-btn" id="pBtn-Wife" onclick="setProfileUser('Wife')">👩 Wife</button>
+      <button class="pu-btn on" id="pBtn-Husband" onclick="setProfileUser('Husband')">👨 Me (Husband)</button>
+      <button class="pu-btn" id="pBtn-Wife" onclick="setProfileUser('Wife')">👩 Wife</button>
     </div>
 
-    <div style="font-size:10px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;">Where do you work out?</div>
-    <div class="eq-option selected" id="eq-home" onclick="selectEquipment('home')">
+    <div style="font-size:10px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;">Body Stats</div>
+    <div class="form-row">
+      <div><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Height</div><input class="form-input" id="setupHeight" placeholder='e.g. 6ft 7in' style="margin-bottom:0;"></div>
+      <div><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Weight (lbs)</div><input class="form-input" id="setupWeight" type="number" placeholder="255" style="margin-bottom:0;"></div>
+    </div>
+    <div class="form-row" style="margin-top:8px;">
+      <div><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Age</div><input class="form-input" id="setupAge" type="number" placeholder="30" style="margin-bottom:0;"></div>
+      <div><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Goal Weight (lbs)</div><input class="form-input" id="setupGoalWeight" type="number" placeholder="220" style="margin-bottom:0;"></div>
+    </div>
+
+    <div style="font-size:10px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin:16px 0 10px;">Where do you work out?</div>
+    <div class="eq-opt on" id="eq-home" onclick="selectEquipment('home')">
       <div style="font-weight:700;font-size:14px;margin-bottom:2px;">🏠 Home</div>
       <div style="font-size:12px;color:var(--muted);">25lb dumbbells, ab roller, walking treadmill</div>
     </div>
-    <div class="eq-option" id="eq-apartment" onclick="selectEquipment('apartment')">
-      <div style="font-weight:700;font-size:14px;margin-bottom:2px;">🏢 Apartment/Complex Gym</div>
+    <div class="eq-opt" id="eq-apartment" onclick="selectEquipment('apartment')">
+      <div style="font-weight:700;font-size:14px;margin-bottom:2px;">🏢 Apartment Gym</div>
       <div style="font-size:12px;color:var(--muted);">Dumbbells up to 50lb, cables, benches, basic cardio</div>
     </div>
-    <div class="eq-option" id="eq-public" onclick="selectEquipment('public')">
-      <div style="font-weight:700;font-size:14px;margin-bottom:2px;">💪 Public Gym (Full Access)</div>
-      <div style="font-size:12px;color:var(--muted);">Barbells, full machine suite, cables, everything</div>
+    <div class="eq-opt" id="eq-public" onclick="selectEquipment('public')">
+      <div style="font-weight:700;font-size:14px;margin-bottom:2px;">💪 Public Gym</div>
+      <div style="font-size:12px;color:var(--muted);">Barbells, full machines, cables, everything</div>
     </div>
 
-    <div style="font-size:10px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin:16px 0 10px;">Goals (pick all that apply)</div>
+    <div style="font-size:10px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin:16px 0 10px;">Goals</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;" id="goalBtns">
-      <button class="goal-btn" data-g="muscle" onclick="toggleGoal(this)">💪 Build Muscle</button>
-      <button class="goal-btn" data-g="fat" onclick="toggleGoal(this)">🔥 Lose Fat</button>
-      <button class="goal-btn" data-g="cardio" onclick="toggleGoal(this)">🏃 Cardio</button>
-      <button class="goal-btn" data-g="strength" onclick="toggleGoal(this)">🏋️ Get Stronger</button>
-      <button class="goal-btn" data-g="postpartum" onclick="toggleGoal(this)">🤱 Postpartum</button>
+      <button class="pill-btn" data-g="muscle" onclick="toggleGoal(this)">💪 Build Muscle</button>
+      <button class="pill-btn" data-g="fat" onclick="toggleGoal(this)">🔥 Lose Fat</button>
+      <button class="pill-btn" data-g="cardio" onclick="toggleGoal(this)">🏃 Cardio</button>
+      <button class="pill-btn" data-g="strength" onclick="toggleGoal(this)">🏋️ Strength</button>
+      <button class="pill-btn" data-g="postpartum" onclick="toggleGoal(this)">🤱 Postpartum</button>
     </div>
 
     <div style="font-size:10px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin:16px 0 10px;">Workout days per week</div>
     <div style="display:flex;gap:8px;">
-      <button class="goal-btn" data-days="3" onclick="selectDays(this)">3 days</button>
-      <button class="goal-btn on" data-days="4" onclick="selectDays(this)">4 days</button>
-      <button class="goal-btn" data-days="5" onclick="selectDays(this)">5 days</button>
+      <button class="pill-btn" data-days="3" onclick="selectDays(this)">3 days</button>
+      <button class="pill-btn on" data-days="4" onclick="selectDays(this)">4 days</button>
+      <button class="pill-btn" data-days="5" onclick="selectDays(this)">5 days</button>
+    </div>
+
+    <div style="font-size:10px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin:16px 0 10px;">Fasting Window</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="pill-btn" data-fast="14:10" onclick="selectFast(this)">14:10</button>
+      <button class="pill-btn on" data-fast="16:8" onclick="selectFast(this)">16:8</button>
+      <button class="pill-btn" data-fast="18:6" onclick="selectFast(this)">18:6</button>
+      <button class="pill-btn" data-fast="20:4" onclick="selectFast(this)">20:4</button>
     </div>
 
     <button class="btn btn-gold" onclick="saveProfile()" style="margin-top:24px;">Save & Start →</button>
@@ -208,11 +244,11 @@ body{background:var(--bg);color:var(--text);font-family:'Trebuchet MS','Lucida S
   </div>
   <div class="content" id="tabContent"></div>
   <div class="tab-bar">
-    <button class="tab-btn active" onclick="setTab('home',this)">🏠<span style="font-size:9px;">Home</span></button>
-    <button class="tab-btn" onclick="setTab('workout',this)">💪<span style="font-size:9px;">Workout</span></button>
-    <button class="tab-btn" onclick="setTab('log',this)">📋<span style="font-size:9px;">Log</span></button>
-    <button class="tab-btn" onclick="setTab('nutrition',this)">🥗<span style="font-size:9px;">Nutrition</span></button>
-    <button class="tab-btn" onclick="setTab('progress',this)">📈<span style="font-size:9px;">Progress</span></button>
+    <button class="tab-btn active" onclick="setTab('home',this)"><span class="tab-icon">🏠</span>Home</button>
+    <button class="tab-btn" onclick="setTab('workout',this)"><span class="tab-icon">💪</span>Workout</button>
+    <button class="tab-btn" onclick="setTab('log',this)"><span class="tab-icon">📋</span>Log</button>
+    <button class="tab-btn" onclick="setTab('mindset',this)"><span class="tab-icon">🧘</span>Mindset</button>
+    <button class="tab-btn" onclick="setTab('progress',this)"><span class="tab-icon">📈</span>Progress</button>
   </div>
 </div>
 
@@ -223,25 +259,26 @@ body{background:var(--bg);color:var(--text);font-family:'Trebuchet MS','Lucida S
     <div><div style="font-weight:800;font-size:15px;">🤖 AI Coach</div><div style="font-size:11px;color:var(--muted);">Powered by Claude</div></div>
     <button onclick="closeChat()" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;">×</button>
   </div>
-  <div class="chat-msgs" id="chatMsgs"></div>
+  <div style="flex:1;overflow-y:auto;padding:14px;" id="chatMsgs"></div>
   <div class="chat-input-row">
     <input class="chat-input" id="chatInput" placeholder="Ask your coach..." onkeydown="if(event.key==='Enter')sendChat()">
     <button class="chat-send" onclick="sendChat()">→</button>
   </div>
 </div>
 
+<!-- FOOD SCAN INPUT (hidden) -->
+<input type="file" id="foodScanInput" accept="image/*" capture="environment" style="display:none;" onchange="analyzeFoodPhoto(this)">
+
 <script>
 // ── KEY ───────────────────────────────────────────────────────────────────────
-const RAILWAY = 'https://nexa-finance-production.up.railway.app';
-let KEY = localStorage.getItem('nexafit_key')||localStorage.getItem('nexa_api_key')||localStorage.getItem('nexa_key')||localStorage.getItem('fcc_key')||'';
+const RAILWAY='https://nexa-finance-production.up.railway.app';
+let KEY=localStorage.getItem('nexafit_key')||localStorage.getItem('nexa_api_key')||localStorage.getItem('nexa_key')||localStorage.getItem('fcc_key')||'';
 
 function saveKey(){
   const v=document.getElementById('apiKeyInput').value.trim();
   if(!v.startsWith('sk-')){document.getElementById('keyErr').style.display='block';return;}
-  KEY=v;
-  ['nexafit_key','nexa_api_key','nexa_key','fcc_key'].forEach(k=>localStorage.setItem(k,v));
-  const hint=document.getElementById('storedKeyHint');
-  if(hint){hint.style.display='block';hint.textContent='Active: '+v.slice(0,18)+'...';}
+  KEY=v;['nexafit_key','nexa_api_key','nexa_key','fcc_key'].forEach(k=>localStorage.setItem(k,v));
+  const h=document.getElementById('storedKeyHint');if(h){h.style.display='block';h.textContent='Active: '+v.slice(0,18)+'...';}
   document.getElementById('keyModal').classList.remove('open');
 }
 function clearKey(){KEY='';['nexafit_key','nexa_api_key','nexa_key','fcc_key'].forEach(k=>localStorage.removeItem(k));document.getElementById('apiKeyInput').value='';}
@@ -254,69 +291,179 @@ const S={
 };
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
-let activeUser = S.get('nf_user','Husband');
-let profiles = S.get('nf_profiles',{
-  Husband:{equipment:'home',goals:['muscle','fat'],daysPerWeek:4},
-  Wife:{equipment:'home',goals:['postpartum'],daysPerWeek:3}
+let activeUser=S.get('nf_user','Husband');
+let profiles=S.get('nf_profiles',{
+  Husband:{equipment:'home',goals:['muscle','fat'],daysPerWeek:4,fastingWindow:'16:8',height:'6ft 7in',weight:255,age:30,goalWeight:220},
+  Wife:{equipment:'home',goals:['postpartum'],daysPerWeek:3,fastingWindow:'16:8',height:'5ft 5in',weight:140,age:28,goalWeight:130}
 });
-let weekSchedules = S.get('nf_schedules',{});  // weekly lightweight schedule
-let workoutLog = S.get('nf_wlog',[]);
-let waterData = S.get('nf_water',{});
-let mealLog = S.get('nf_meals',{});
-let nutritionTips = S.get('nf_ntips',{});
-let habitLog = S.get('nf_habits',{});
-let bodyPartLog = S.get('nf_bp',{});
-let activeWorkout = null;
-let currentExIdx = 0;
-let chatHistory = [];
-let chatBusy = false;
-let activeTab = 'home';
+let weekSchedules=S.get('nf_schedules',{});
+let workoutLog=S.get('nf_wlog',[]);
+let waterData=S.get('nf_water',{});
+let mealLog=S.get('nf_meals',{});
+let habitLog=S.get('nf_habits',{});
+let bodyPartLog=S.get('nf_bp',{});
+let nutritionTips=S.get('nf_ntips',{});
+let fastingData=S.get('nf_fasting',{});
+let meditationLog=S.get('nf_meditation',{});
+let activeWorkout=null;
+let currentExIdx=0;
+let chatHistory=[];
+let chatBusy=false;
+let activeTab='home';
+let medTimer=null;
+let medSeconds=0;
+let medRunning=false;
+let medDuration=600; // 10 min default
 
-const BODY_PARTS = [
-  {id:'chest',label:'Chest',icon:'💪'},
-  {id:'back',label:'Back',icon:'🔙'},
-  {id:'shoulders',label:'Shoulders',icon:'🏋️'},
-  {id:'arms',label:'Arms',icon:'💪'},
-  {id:'legs',label:'Legs',icon:'🦵'},
-  {id:'core',label:'Core',icon:'⚡'},
+const BODY_PARTS=[
+  {id:'chest',label:'Chest',icon:'💪'},{id:'back',label:'Back',icon:'🔙'},
+  {id:'shoulders',label:'Shoulders',icon:'🏋️'},{id:'arms',label:'Arms',icon:'💪'},
+  {id:'legs',label:'Legs',icon:'🦵'},{id:'core',label:'Core',icon:'⚡'},
   {id:'cardio',label:'Cardio',icon:'🏃'},
 ];
-
-const EQ = {
-  home:'25lb dumbbells, ab roller, walking treadmill (home only — no barbell)',
-  apartment:'Dumbbells up to 50lb, cables, pull-up bar, benches, treadmill/bike (apartment gym)',
-  public:'Full barbell sets, all machines, cables, squat racks, full cardio suite (public gym)'
+const EQ={
+  home:'25lb dumbbells, ab roller, walking treadmill (home only)',
+  apartment:'Dumbbells up to 50lb, cables, pull-up bar, benches, treadmill (apartment gym)',
+  public:'Full barbells, all machines, cables, squat racks, full cardio suite (public gym)'
 };
-
-const DAYS7 = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-const DAYS3 = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DAYS7=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
-const todayStr = ()=>new Date().toISOString().split('T')[0];
-const todayDay = ()=>new Date().toLocaleDateString('en-US',{weekday:'long'});
-const getMon = ()=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().split('T')[0];};
-const getProfile = ()=>profiles[activeUser]||{equipment:'home',goals:['muscle'],daysPerWeek:4};
-const getSchedule = ()=>weekSchedules[`${activeUser}_${getMon()}`]||null;
-const getWater = ()=>waterData[`${activeUser}_${todayStr()}`]||0;
-const setWater = n=>{waterData[`${activeUser}_${todayStr()}`]=Math.max(0,Math.min(n,20));S.set('nf_water',waterData);};
-const getMeals = ()=>mealLog[`${activeUser}_${todayStr()}`]||[];
-const setMeals = m=>{mealLog[`${activeUser}_${todayStr()}`]=m;S.set('nf_meals',mealLog);};
-const getHabits = ()=>habitLog[`${activeUser}_${todayStr()}`]||{};
-const setHabits = h=>{habitLog[`${activeUser}_${todayStr()}`]=h;S.set('nf_habits',habitLog);};
-const getBP = ()=>bodyPartLog[`${activeUser}_${getMon()}`]||{};
-const setBP = (id,v)=>{const key=`${activeUser}_${getMon()}`;if(!bodyPartLog[key])bodyPartLog[key]={};bodyPartLog[key][id]=v;S.set('nf_bp',bodyPartLog);};
-const getMissing = ()=>BODY_PARTS.filter(b=>!getBP()[b.id]).map(b=>b.label);
-const getWeekLogs = ()=>{const ws=new Date(getMon());return workoutLog.filter(w=>w.user===activeUser&&new Date(w.date)>=ws);};
-const getDaysSinceWorkout = ()=>{
-  const myLogs=workoutLog.filter(w=>w.user===activeUser);
-  if(!myLogs.length)return null;
-  const last=new Date(myLogs[myLogs.length-1].date);
-  const diff=Math.floor((new Date()-last)/(1000*60*60*24));
-  return diff;
-};
+const todayStr=()=>new Date().toISOString().split('T')[0];
+const todayDay=()=>new Date().toLocaleDateString('en-US',{weekday:'long'});
+const getMon=()=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().split('T')[0];};
+const getProfile=()=>profiles[activeUser]||{equipment:'home',goals:['muscle'],daysPerWeek:4,fastingWindow:'16:8'};
+const getSchedule=()=>weekSchedules[`${activeUser}_${getMon()}`]||null;
+const getWater=()=>waterData[`${activeUser}_${todayStr()}`]||0;
+const setWater=n=>{waterData[`${activeUser}_${todayStr()}`]=Math.max(0,Math.min(n,20));S.set('nf_water',waterData);};
+const getMeals=()=>mealLog[`${activeUser}_${todayStr()}`]||[];
+const setMeals=m=>{mealLog[`${activeUser}_${todayStr()}`]=m;S.set('nf_meals',mealLog);};
+const getHabits=()=>habitLog[`${activeUser}_${todayStr()}`]||{};
+const setHabits=h=>{habitLog[`${activeUser}_${todayStr()}`]=h;S.set('nf_habits',habitLog);};
+const getBP=()=>bodyPartLog[`${activeUser}_${getMon()}`]||{};
+const setBP=(id,v)=>{const k=`${activeUser}_${getMon()}`;if(!bodyPartLog[k])bodyPartLog[k]={};bodyPartLog[k][id]=v;S.set('nf_bp',bodyPartLog);};
+const getMissing=()=>BODY_PARTS.filter(b=>!getBP()[b.id]).map(b=>b.label);
+const getWeekLogs=()=>{const ws=new Date(getMon());return workoutLog.filter(w=>w.user===activeUser&&new Date(w.date)>=ws);};
+const getDaysSince=()=>{const l=workoutLog.filter(w=>w.user===activeUser);if(!l.length)return null;return Math.floor((new Date()-new Date(l[l.length-1].date))/(864e5));};
+
+// ── BMR / TDEE / MACROS ───────────────────────────────────────────────────────
+function calcStats(){
+  const p=getProfile();
+  if(!p.weight||!p.age)return null;
+  // Parse height to inches
+  let inches=79; // default 6'7"
+  if(p.height){
+    const m=p.height.match(/(\d+)\s*ft\s*(\d+)\s*in/i);
+    if(m)inches=parseInt(m[1])*12+parseInt(m[2]);
+    else{const m2=p.height.match(/(\d+)/);if(m2)inches=parseInt(m2[1]);}
+  }
+  const weightKg=p.weight*0.453592;
+  const heightCm=inches*2.54;
+  const isWife=activeUser==='Wife';
+  // Mifflin-St Jeor
+  const bmr=isWife
+    ?(10*weightKg)+(6.25*heightCm)-(5*p.age)-161
+    :(10*weightKg)+(6.25*heightCm)-(5*p.age)+5;
+  const activityMult=1.55; // moderately active
+  const tdee=Math.round(bmr*activityMult);
+  const hasLossFat=p.goals?.includes('fat');
+  const hasMuscle=p.goals?.includes('muscle');
+  let calTarget=tdee;
+  if(hasLossFat&&!hasMuscle)calTarget=tdee-500;
+  else if(hasMuscle&&!hasLossFat)calTarget=tdee+200;
+  // Macros
+  const proteinG=Math.round(p.weight*1); // 1g per lb bodyweight
+  const fatG=Math.round(calTarget*0.25/9);
+  const carbG=Math.round((calTarget-(proteinG*4)-(fatG*9))/4);
+  return{bmr:Math.round(bmr),tdee,calTarget,proteinG,fatG,carbG};
+}
+
+// ── FASTING ───────────────────────────────────────────────────────────────────
+function getFastState(){
+  const fd=fastingData[activeUser]||{};
+  const p=getProfile();
+  const window=p.fastingWindow||'16:8';
+  const fastHours=parseInt(window.split(':')[0]);
+  const eatHours=parseInt(window.split(':')[1]);
+  const now=new Date();
+  if(!fd.lastFastStart)return{fasting:false,canEat:true,hoursLeft:0,pct:0,window,fastHours,eatHours};
+  const start=new Date(fd.lastFastStart);
+  const elapsed=(now-start)/3600000; // hours elapsed
+  const fasting=elapsed<fastHours;
+  const hoursLeft=fasting?Math.max(0,fastHours-elapsed):0;
+  const eatWindowLeft=!fasting?Math.max(0,eatHours-(elapsed-fastHours)):0;
+  const pct=fasting?Math.min(elapsed/fastHours,1):1;
+  return{fasting,canEat:!fasting,hoursLeft,eatWindowLeft,pct,elapsed,window,fastHours,eatHours,start};
+}
+function startFast(){
+  fastingData[activeUser]={lastFastStart:new Date().toISOString()};
+  S.set('nf_fasting',fastingData);render();
+}
+function endFast(){
+  fastingData[activeUser]={};S.set('nf_fasting',fastingData);render();
+}
+function fmtFastTime(hours){
+  const h=Math.floor(hours);const m=Math.floor((hours-h)*60);
+  return`${h}h ${m}m`;
+}
+
+// ── MEDITATION ────────────────────────────────────────────────────────────────
+function getTodayMed(){return meditationLog[`${activeUser}_${todayStr()}`]||{done:false,minutes:0,streak:0};}
+function getMedStreak(){
+  let streak=0;const d=new Date();
+  for(let i=0;i<365;i++){
+    const k=`${activeUser}_${d.toISOString().split('T')[0]}`;
+    if(meditationLog[k]?.done)streak++;
+    else if(i>0)break;
+    d.setDate(d.getDate()-1);
+  }
+  return streak;
+}
+function startMed(){
+  medRunning=true;medSeconds=0;
+  const circle=document.getElementById('medCircle');
+  if(circle)circle.classList.add('active');
+  medTimer=setInterval(()=>{
+    medSeconds++;
+    const el=document.getElementById('medTimeDisplay');
+    if(el){
+      const m=Math.floor(medSeconds/60);const s=medSeconds%60;
+      el.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+    const prog=document.getElementById('medProg');
+    if(prog)prog.style.width=Math.min(medSeconds/medDuration*100,100)+'%';
+    if(medSeconds>=medDuration)completeMed();
+  },1000);
+  updateMedUI();
+}
+function pauseMed(){
+  clearInterval(medTimer);medTimer=null;medRunning=false;
+  const circle=document.getElementById('medCircle');
+  if(circle)circle.classList.remove('active');
+  updateMedUI();
+}
+function completeMed(){
+  clearInterval(medTimer);medTimer=null;medRunning=false;
+  const mins=Math.round(medSeconds/60);
+  const k=`${activeUser}_${todayStr()}`;
+  meditationLog[k]={done:true,minutes:mins,streak:getMedStreak()+1};
+  S.set('nf_meditation',meditationLog);
+  speak(`Meditation complete. ${mins} minutes of stillness. Well done.`);
+  render();
+}
+function resetMed(){
+  clearInterval(medTimer);medTimer=null;medRunning=false;medSeconds=0;
+  updateMedUI();
+}
+function updateMedUI(){
+  const startBtn=document.getElementById('medStartBtn');
+  const pauseBtn=document.getElementById('medPauseBtn');
+  if(startBtn)startBtn.style.display=medRunning?'none':'block';
+  if(pauseBtn)pauseBtn.style.display=medRunning?'block':'none';
+}
 
 // ── API ───────────────────────────────────────────────────────────────────────
-async function callAI(messages, system, maxTokens=1000){
+async function callAI(messages,system,maxTokens=1000){
   try{
     const res=await fetch(`${RAILWAY}/api/ai/chat`,{
       method:'POST',headers:{'Content-Type':'application/json'},
@@ -327,7 +474,6 @@ async function callAI(messages, system, maxTokens=1000){
     return d.content?.[0]?.text||'';
   }catch(e){return 'Error: '+e.message;}
 }
-
 async function speak(text){
   const clean=text.replace(/<[^>]+>/g,'').trim().slice(0,500);
   if(!clean)return;
@@ -336,23 +482,126 @@ async function speak(text){
     if(!res.ok)return;
     const blob=await res.blob();
     const url=URL.createObjectURL(blob);
-    const audio=new Audio(url);
-    audio.onended=()=>URL.revokeObjectURL(url);
-    audio.play();
+    const a=new Audio(url);a.onended=()=>URL.revokeObjectURL(url);a.play();
   }catch{}
 }
 
-// ── GENERATE WEEKLY SCHEDULE (lightweight) ────────────────────────────────────
-async function generateWeekSchedule(){
+// ── FOOD PHOTO SCANNER ────────────────────────────────────────────────────────
+function openFoodScanner(){
   if(!requireKey())return;
+  document.getElementById('foodScanInput').click();
+}
+
+async function analyzeFoodPhoto(input){
+  const file=input.files[0];if(!file)return;
+  // Show scanning state
+  const mealFormWrap=document.getElementById('mealFormWrap');
+  if(mealFormWrap){
+    mealFormWrap.style.display='block';
+    mealFormWrap.innerHTML=`<div class="scan-loading"><div class="spinner"></div><div style="font-size:13px;color:var(--muted);">Analyzing your meal...</div></div>`;
+  }
+  try{
+    // Convert to base64
+    const base64=await new Promise((res,rej)=>{
+      const r=new FileReader();
+      r.onload=()=>res(r.result.split(',')[1]);
+      r.onerror=()=>rej(new Error('Read failed'));
+      r.readAsDataURL(file);
+    });
+    const mediaType=file.type||'image/jpeg';
+    // Call Claude with image
+    const response=await fetch(`${RAILWAY}/api/ai/chat`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        apiKey:KEY,
+        system:'You are a nutrition expert. Analyze food photos and return accurate macro estimates.',
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
+            {type:'text',text:'Analyze this meal photo. Return ONLY valid JSON: {"name":"Grilled Chicken & Rice","calories":520,"protein":42,"carbs":48,"fat":12,"fiber":3,"confidence":"medium","notes":"Estimated based on visible portion size"}'}
+          ]
+        }],
+        max_tokens:400
+      })
+    });
+    const data=await response.json();
+    if(!response.ok)throw new Error(data.message||response.status);
+    const text=data.content?.[0]?.text||'';
+    const clean=text.replace(/```json|```/g,'').trim();
+    const s=clean.indexOf('{');const e=clean.lastIndexOf('}');
+    const result=JSON.parse(clean.slice(s,e+1));
+    // Fill form with results
+    if(mealFormWrap){
+      mealFormWrap.innerHTML=`
+        <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:10px;color:var(--green);letter-spacing:2px;margin-bottom:6px;">📷 SCAN RESULT</div>
+          <div style="font-weight:700;font-size:15px;margin-bottom:4px;">${result.name}</div>
+          <div style="display:flex;gap:12px;font-size:12px;color:var(--muted);">
+            <span style="color:var(--green);">${result.calories} kcal</span>
+            <span>${result.protein}g protein</span>
+            <span>${result.carbs}g carbs</span>
+            <span>${result.fat}g fat</span>
+          </div>
+          ${result.notes?`<div style="font-size:11px;color:var(--muted);margin-top:6px;">💡 ${result.notes}</div>`:''}
+          <div style="font-size:10px;color:var(--dim);margin-top:4px;">Confidence: ${result.confidence||'medium'} — tap to adjust</div>
+        </div>
+        <input class="form-input" id="mName" value="${result.name}" placeholder="Meal name">
+        <div class="form-row">
+          <input class="form-input" id="mCal" type="number" value="${result.calories}" placeholder="Calories" style="margin-bottom:0;">
+          <input class="form-input" id="mPro" type="number" value="${result.protein}" placeholder="Protein (g)" style="margin-bottom:0;">
+        </div>
+        <div style="height:8px;"></div>
+        <div class="form-row">
+          <input class="form-input" id="mCarb" type="number" value="${result.carbs}" placeholder="Carbs (g)" style="margin-bottom:0;">
+          <input class="form-input" id="mFat" type="number" value="${result.fat}" placeholder="Fat (g)" style="margin-bottom:0;">
+        </div>
+        <div style="height:8px;"></div>
+        <select class="form-select" id="mType"><option>Breakfast</option><option>Lunch</option><option selected>Dinner</option><option>Snack</option></select>
+        <button class="btn btn-green" onclick="addMeal()" style="margin-bottom:4px;">✅ Save Meal</button>
+        <button class="btn btn-ghost" onclick="openFoodScanner()" style="font-size:12px;margin-bottom:0;">📷 Scan Again</button>
+      `;
+    }
+  }catch(e){
+    if(mealFormWrap){
+      mealFormWrap.innerHTML=`
+        <div style="color:var(--red);font-size:13px;margin-bottom:10px;">⚠ Could not analyze photo: ${e.message}</div>
+        <button class="btn btn-ghost" onclick="showManualForm()" style="margin-bottom:0;">Enter Manually</button>
+      `;
+    }
+  }
+  input.value='';
+}
+
+function showManualForm(){
+  const w=document.getElementById('mealFormWrap');
+  if(w)w.innerHTML=`
+    <input class="form-input" id="mName" placeholder="Meal name">
+    <div class="form-row">
+      <input class="form-input" id="mCal" type="number" placeholder="Calories" style="margin-bottom:0;">
+      <input class="form-input" id="mPro" type="number" placeholder="Protein (g)" style="margin-bottom:0;">
+    </div>
+    <div style="height:8px;"></div>
+    <div class="form-row">
+      <input class="form-input" id="mCarb" type="number" placeholder="Carbs (g)" style="margin-bottom:0;">
+      <input class="form-input" id="mFat" type="number" placeholder="Fat (g)" style="margin-bottom:0;">
+    </div>
+    <div style="height:8px;"></div>
+    <select class="form-select" id="mType"><option>Breakfast</option><option>Lunch</option><option selected>Dinner</option><option>Snack</option></select>
+    <button class="btn btn-green" onclick="addMeal()" style="margin-bottom:0;">Save Meal</button>
+  `;
+}
+
+// ── SCHEDULE GENERATION ───────────────────────────────────────────────────────
+async function generateWeekSchedule(){
+  if(!requireKey())return null;
   const p=getProfile();
   const isWife=activeUser==='Wife';
   const prompt=`Create a ${p.daysPerWeek}-day workout schedule for the week (Monday-Sunday).
-Goals: ${p.goals.join(', ')}. ${isWife?'Postpartum recovery — gentle and safe.':''}
-Return ONLY this JSON structure for all 7 days:
-{"Monday":{"isRest":false,"focus":"Chest & Triceps","hasCardio":true,"cardioNote":"15 min treadmill"},"Tuesday":{"isRest":true,"note":"Active recovery — stretch or walk"},...}
-Rules: ${p.daysPerWeek} workout days, rest of days are rest/recovery. Spread muscle groups. No consecutive heavy days. Include cardio ${isWife?'2':'2-3'} days.`;
-
+Goals: ${(p.goals||['muscle']).join(', ')}. ${isWife?'Postpartum recovery.':''}
+Return ONLY JSON for all 7 days:
+{"Monday":{"isRest":false,"focus":"Chest & Triceps","hasCardio":true,"cardioNote":"15 min treadmill"},"Tuesday":{"isRest":true,"note":"Active recovery"},...}
+Rules: ${p.daysPerWeek} workout days, rest of days are rest. Spread muscle groups. No back-to-back heavy days. Include cardio ${isWife?'2':'2-3'} days.`;
   const res=await callAI([{role:'user',content:prompt}],'Return only valid JSON. No markdown. Start with {',600);
   if(!res||res.startsWith('Error'))return null;
   try{
@@ -360,10 +609,9 @@ Rules: ${p.daysPerWeek} workout days, rest of days are rest/recovery. Spread mus
     const s=clean.indexOf('{');const e=clean.lastIndexOf('}');
     if(s!==-1&&e!==-1)return JSON.parse(clean.slice(s,e+1));
     return JSON.parse(clean);
-  }catch(err){console.error('Schedule parse failed:',err,res);return null;}
+  }catch(err){console.error('Schedule parse:',err);return null;}
 }
 
-// ── GENERATE TODAY'S WORKOUT (full exercises) ─────────────────────────────────
 async function generateTodayWorkout(){
   if(!requireKey())return null;
   const p=getProfile();
@@ -371,50 +619,54 @@ async function generateTodayWorkout(){
   const todayPlan=sched?sched[todayDay()]:null;
   const missing=getMissing();
   const isWife=activeUser==='Wife';
-
+  const stats=calcStats();
   let focus='';
-  if(todayPlan&&!todayPlan.isRest){
-    focus=`Today's scheduled focus: ${todayPlan.focus}${todayPlan.hasCardio?` + ${todayPlan.cardioNote||'cardio'}`:''}.`;
-  } else if(missing.length>0){
-    focus=`No schedule set. Target these unchecked muscle groups: ${missing.slice(0,3).join(', ')}.`;
-  } else {
-    focus='All muscle groups hit this week. Do a full body or cardio session.';
-  }
-
-  const prompt=`Generate one workout session for today. Equipment: ${EQ[p.equipment]}. ${focus} ${isWife?'Max 25 min, postpartum safe. 3-4 exercises.':'45-60 min. 5-6 exercises. Progressive overload.'}
+  if(todayPlan&&!todayPlan.isRest)focus=`Today's scheduled focus: ${todayPlan.focus}${todayPlan.hasCardio?` + ${todayPlan.cardioNote||'cardio'}`:''}.`;
+  else if(missing.length>0)focus=`Target unchecked muscle groups: ${missing.slice(0,3).join(', ')}.`;
+  else focus='All muscle groups hit this week. Full body or cardio session.';
+  const prompt=`Generate one workout for today. Equipment: ${EQ[p.equipment]}. ${focus} ${isWife?'Max 25 min, postpartum safe. 3-4 exercises.':'45-60 min. 5-6 exercises.'}${stats?` User weighs ${p.weight}lbs, height ${p.height}.`:''}
 Return ONLY valid JSON:
-{"workoutName":"Push Day","targetMuscles":["Chest","Shoulders","Triceps"],"duration":"45 min","hasCardio":${todayPlan?.hasCardio||false},"cardio":{"type":"Treadmill walk","duration":"15 min","intensity":"Moderate"},"exercises":[{"name":"Bench Press","sets":4,"reps":"8-10","weight":"135lb","rest":"90 sec","modification":"Use dumbbells if needed"}]}`;
-
-  const res=await callAI([{role:'user',content:prompt}],'Return only valid JSON. No markdown. Start with {',1500);
+{"workoutName":"Push Day","targetMuscles":["Chest","Shoulders"],"duration":"45 min","hasCardio":false,"cardio":{"type":"Treadmill","duration":"15 min","intensity":"Moderate"},"exercises":[{"name":"Push-ups","sets":3,"reps":"15","weight":"Bodyweight","rest":"60 sec","modification":"On knees if needed"}]}`;
+  const res=await callAI([{role:'user',content:prompt}],'Return only valid JSON. Start with {',1500);
   if(!res||res.startsWith('Error'))return null;
   try{
     const clean=res.replace(/```json|```/g,'').trim();
     const s=clean.indexOf('{');const e=clean.lastIndexOf('}');
     if(s!==-1&&e!==-1)return JSON.parse(clean.slice(s,e+1));
     return JSON.parse(clean);
-  }catch(err){console.error('Workout parse failed:',err);return null;}
+  }catch{return null;}
 }
 
 // ── SETUP ─────────────────────────────────────────────────────────────────────
-let _setupUser='Husband';let _setupEq='home';let _setupGoals=[];let _setupDays=4;
+let _su='Husband';let _se='home';let _sg=[];let _sd=4;let _sf='16:8';
 
 function openSetup(){
-  _setupUser=activeUser;const p=getProfile();
-  _setupEq=p.equipment||'home';_setupGoals=[...(p.goals||[])];_setupDays=p.daysPerWeek||4;
-  ['Husband','Wife'].forEach(u=>{const b=document.getElementById('pBtn-'+u);if(b){b.className='profile-user-btn'+(u===_setupUser?' on':'');}});
-  ['home','apartment','public'].forEach(e=>{const el=document.getElementById('eq-'+e);if(el)el.className='eq-option'+(e===_setupEq?' selected':'');});
-  document.querySelectorAll('.goal-btn').forEach(b=>{b.className='goal-btn'+(_setupGoals.includes(b.dataset.g)?' on':'');});
-  document.querySelectorAll('[data-days]').forEach(b=>{b.className='goal-btn'+(parseInt(b.dataset.days)===_setupDays?' on':'');});
+  _su=activeUser;const p=getProfile();
+  _se=p.equipment||'home';_sg=[...(p.goals||[])];_sd=p.daysPerWeek||4;_sf=p.fastingWindow||'16:8';
+  document.getElementById('setupHeight').value=p.height||'';
+  document.getElementById('setupWeight').value=p.weight||'';
+  document.getElementById('setupAge').value=p.age||'';
+  document.getElementById('setupGoalWeight').value=p.goalWeight||'';
+  ['Husband','Wife'].forEach(u=>{const b=document.getElementById('pBtn-'+u);if(b)b.className='pu-btn'+(u===_su?' on':'');});
+  ['home','apartment','public'].forEach(e=>{const el=document.getElementById('eq-'+e);if(el)el.className='eq-opt'+(e===_se?' on':'');});
+  document.querySelectorAll('.goal-btn,.pill-btn[data-g]').forEach(b=>{b.className='pill-btn'+(_sg.includes(b.dataset.g)?' on':'');});
+  document.querySelectorAll('[data-days]').forEach(b=>{b.className='pill-btn'+(parseInt(b.dataset.days)===_sd?' on':'');});
+  document.querySelectorAll('[data-fast]').forEach(b=>{b.className='pill-btn'+(b.dataset.fast===_sf?' on':'');});
   document.getElementById('setupScreen').classList.add('open');
 }
-function setProfileUser(u){_setupUser=u;['Husband','Wife'].forEach(x=>{const b=document.getElementById('pBtn-'+x);if(b)b.className='profile-user-btn'+(x===u?' on':'');});}
-function selectEquipment(e){_setupEq=e;['home','apartment','public'].forEach(x=>{const el=document.getElementById('eq-'+x);if(el)el.className='eq-option'+(x===e?' selected':'');});}
-function toggleGoal(btn){const g=btn.dataset.g;if(_setupGoals.includes(g))_setupGoals=_setupGoals.filter(x=>x!==g);else _setupGoals.push(g);btn.className='goal-btn'+(_setupGoals.includes(g)?' on':'');}
-function selectDays(btn){_setupDays=parseInt(btn.dataset.days);document.querySelectorAll('[data-days]').forEach(b=>{b.className='goal-btn'+(parseInt(b.dataset.days)===_setupDays?' on':'');});}
+function setProfileUser(u){_su=u;['Husband','Wife'].forEach(x=>{const b=document.getElementById('pBtn-'+x);if(b)b.className='pu-btn'+(x===u?' on':'');});}
+function selectEquipment(e){_se=e;['home','apartment','public'].forEach(x=>{const el=document.getElementById('eq-'+x);if(el)el.className='eq-opt'+(x===e?' on':'');});}
+function toggleGoal(btn){const g=btn.dataset.g;if(_sg.includes(g))_sg=_sg.filter(x=>x!==g);else _sg.push(g);btn.className='pill-btn'+(_sg.includes(g)?' on':'');}
+function selectDays(btn){_sd=parseInt(btn.dataset.days);document.querySelectorAll('[data-days]').forEach(b=>{b.className='pill-btn'+(parseInt(b.dataset.days)===_sd?' on':'');});}
+function selectFast(btn){_sf=btn.dataset.fast;document.querySelectorAll('[data-fast]').forEach(b=>{b.className='pill-btn'+(b.dataset.fast===_sf?' on':'');});}
 function saveProfile(){
-  profiles[_setupUser]={equipment:_setupEq,goals:_setupGoals.length?_setupGoals:['muscle'],daysPerWeek:_setupDays};
+  const h=document.getElementById('setupHeight')?.value?.trim();
+  const w=parseInt(document.getElementById('setupWeight')?.value)||0;
+  const a=parseInt(document.getElementById('setupAge')?.value)||0;
+  const gw=parseInt(document.getElementById('setupGoalWeight')?.value)||0;
+  profiles[_su]={equipment:_se,goals:_sg.length?_sg:['muscle'],daysPerWeek:_sd,fastingWindow:_sf,height:h||'',weight:w||0,age:a||0,goalWeight:gw||0};
   S.set('nf_profiles',profiles);
-  activeUser=_setupUser;S.set('nf_user',activeUser);
+  activeUser=_su;S.set('nf_user',activeUser);
   document.getElementById('setupScreen').classList.remove('open');
   updateHeader();render();
 }
@@ -424,16 +676,15 @@ function setTab(tab,btn){
   activeTab=tab;
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
-  else{const b=document.querySelector(`.tab-btn:nth-child(${['home','workout','log','nutrition','progress'].indexOf(tab)+1})`);if(b)b.classList.add('active');}
+  else{const b=document.querySelector(`.tab-btn:nth-child(${['home','workout','log','mindset','progress'].indexOf(tab)+1})`);if(b)b.classList.add('active');}
   render();
 }
 function render(){
-  const c=document.getElementById('tabContent');
-  c.innerHTML='';
+  const c=document.getElementById('tabContent');c.innerHTML='';
   if(activeTab==='home')c.innerHTML=renderHome();
   else if(activeTab==='workout')c.innerHTML=renderWorkout();
   else if(activeTab==='log')c.innerHTML=renderLog();
-  else if(activeTab==='nutrition')c.innerHTML=renderNutrition();
+  else if(activeTab==='mindset')c.innerHTML=renderMindset();
   else if(activeTab==='progress')c.innerHTML=renderProgress();
 }
 function updateHeader(){
@@ -444,65 +695,83 @@ function switchUser(){activeUser=activeUser==='Husband'?'Wife':'Husband';S.set('
 
 // ── HOME ──────────────────────────────────────────────────────────────────────
 function renderHome(){
-  const water=getWater();const wgoal=8;
-  const wpct=Math.min(Math.round(water/wgoal*100),100);
+  const water=getWater();
+  const wpct=Math.min(Math.round(water/8*100),100);
   const wlogs=getWeekLogs();
   const bp=getBP();const bpDone=Object.values(bp).filter(Boolean).length;
   const sched=getSchedule();
   const todayPlan=sched?sched[todayDay()]:null;
-  const daysSince=getDaysSinceWorkout();
+  const daysSince=getDaysSince();
   const missing=getMissing();
+  const stats=calcStats();
+  const fast=getFastState();
+  const med=getTodayMed();
 
   let nudge='';
-  if(daysSince===null)nudge=`<div class="nudge">👋 No workouts logged yet. Tap Workout to generate your first session!</div>`;
-  else if(daysSince>=3)nudge=`<div class="nudge">⚡ It's been ${daysSince} days since your last workout. Time to get back at it!</div>`;
-  else if(bpDone===BODY_PARTS.length)nudge=`<div class="nudge">🏆 You hit every muscle group this week. Incredible week!</div>`;
-  else if(missing.length===1)nudge=`<div class="nudge">💪 Almost there — just ${missing[0]} left to hit this week!</div>`;
+  if(daysSince===null)nudge=`<div class="nudge">👋 No workouts logged yet — tap Workout to start!</div>`;
+  else if(daysSince>=3)nudge=`<div class="nudge">⚡ ${daysSince} days since your last workout. Time to get back at it!</div>`;
+  else if(bpDone===BODY_PARTS.length)nudge=`<div class="nudge">🏆 All muscle groups hit this week. Incredible!</div>`;
+  else if(missing.length===1)nudge=`<div class="nudge">💪 One muscle group left: ${missing[0]}. Finish strong!</div>`;
 
-  return `<div style="padding:16px 16px 0;">
+  return`<div style="padding:16px 16px 0;">
   ${nudge}
   <div style="font-size:13px;color:var(--muted);">Good ${new Date().getHours()<12?'Morning':new Date().getHours()<17?'Afternoon':'Evening'}</div>
   <div style="font-size:26px;font-weight:900;margin-bottom:2px;">${activeUser==='Wife'?'Hey babe 💪':'Let\'s get it 🔥'}</div>
   <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div>
 
+  ${stats?`<div class="card card-gold" style="margin-bottom:14px;">
+    <div class="lbl">Daily Targets</div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+      <div style="text-align:center;"><div style="font-size:20px;font-weight:900;color:var(--gold);">${stats.calTarget}</div><div style="font-size:10px;color:var(--muted);">calories</div></div>
+      <div style="text-align:center;"><div style="font-size:20px;font-weight:900;color:var(--green);">${stats.proteinG}g</div><div style="font-size:10px;color:var(--muted);">protein</div></div>
+      <div style="text-align:center;"><div style="font-size:20px;font-weight:900;color:var(--blue);">${stats.carbG}g</div><div style="font-size:10px;color:var(--muted);">carbs</div></div>
+      <div style="text-align:center;"><div style="font-size:20px;font-weight:900;color:var(--purple);">${stats.fatG}g</div><div style="font-size:10px;color:var(--muted);">fat</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);">BMR ${stats.bmr} kcal · TDEE ${stats.tdee} kcal · ${getProfile().weight}lbs</div>
+  </div>`:''}
+
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
-    <div class="card" style="padding:12px 8px;text-align:center;margin-bottom:0;">
-      <div style="font-size:20px;">💧</div>
-      <div style="font-size:18px;font-weight:800;color:var(--gold);">${water}/${wgoal}</div>
-      <div style="font-size:9px;color:var(--muted);">glasses</div>
-    </div>
-    <div class="card" style="padding:12px 8px;text-align:center;margin-bottom:0;">
-      <div style="font-size:20px;">🏋️</div>
-      <div style="font-size:18px;font-weight:800;color:var(--gold);">${wlogs.length}</div>
-      <div style="font-size:9px;color:var(--muted);">this week</div>
-    </div>
-    <div class="card" style="padding:12px 8px;text-align:center;margin-bottom:0;">
-      <div style="font-size:20px;">🎯</div>
-      <div style="font-size:18px;font-weight:800;color:var(--gold);">${bpDone}/${BODY_PARTS.length}</div>
-      <div style="font-size:9px;color:var(--muted);">muscles hit</div>
+    <div class="card" style="padding:12px 8px;text-align:center;margin-bottom:0;"><div style="font-size:18px;">💧</div><div style="font-size:18px;font-weight:800;color:var(--gold);">${water}/8</div><div style="font-size:9px;color:var(--muted);">glasses</div></div>
+    <div class="card" style="padding:12px 8px;text-align:center;margin-bottom:0;"><div style="font-size:18px;">🏋️</div><div style="font-size:18px;font-weight:800;color:var(--gold);">${wlogs.length}</div><div style="font-size:9px;color:var(--muted);">this week</div></div>
+    <div class="card" style="padding:12px 8px;text-align:center;margin-bottom:0;"><div style="font-size:18px;">🧘</div><div style="font-size:18px;font-weight:800;color:var(--purple);">${getMedStreak()}</div><div style="font-size:9px;color:var(--muted);">med streak</div></div>
+  </div>
+
+  <!-- Fasting status -->
+  <div class="card card-teal" style="margin-bottom:14px;">
+    <div class="lbl">Fasting · ${getProfile().fastingWindow||'16:8'}</div>
+    ${fast.canEat&&fast.start?
+      `<div style="font-size:15px;font-weight:700;color:var(--green);">✅ Eating Window Open</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px;">${fmtFastTime(fast.eatWindowLeft||0)} remaining in eating window</div>`
+      :fast.fasting?
+      `<div style="font-size:15px;font-weight:700;color:var(--teal);">⏳ Fasting — ${fmtFastTime(fast.hoursLeft)} left</div>
+      <div class="prog-bg" style="margin-top:8px;"><div class="prog-fill" style="width:${Math.round(fast.pct*100)}%;background:var(--teal);"></div></div>`
+      :`<div style="font-size:13px;color:var(--muted);">Not currently fasting</div>`}
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      ${!fast.fasting?`<button class="btn btn-teal" onclick="startFast()" style="margin-bottom:0;flex:1;padding:10px;">Start Fast</button>`:''}
+      ${fast.fasting?`<button class="btn btn-ghost" onclick="endFast()" style="margin-bottom:0;flex:1;padding:10px;font-size:12px;">End Fast Early</button>`:''}
     </div>
   </div>
 
-  <!-- Today's Plan -->
+  <!-- Today's plan -->
   <div class="card card-gold">
     <div class="lbl">Today · ${todayDay()}</div>
     ${todayPlan?
       todayPlan.isRest?
-        `<div style="font-size:16px;font-weight:700;color:var(--muted);">🌿 Rest Day</div><div style="font-size:13px;color:var(--muted);margin-top:4px;">${todayPlan.note||'Active recovery — stretch or light walk'}</div>`
+        `<div style="font-size:16px;font-weight:700;color:var(--muted);">🌿 Rest Day</div><div style="font-size:13px;color:var(--muted);margin-top:4px;">${todayPlan.note||'Active recovery'}</div>`
         :`<div style="font-size:16px;font-weight:700;color:var(--gold);">${todayPlan.focus}</div>
         ${todayPlan.hasCardio?`<div style="font-size:12px;color:var(--green);margin-top:4px;">+ ${todayPlan.cardioNote||'Cardio'}</div>`:''}
         <button class="btn btn-gold" style="margin-top:12px;margin-bottom:0;" onclick="quickStart()">⚡ Start Today's Workout</button>`
-      :`<div style="font-size:13px;color:var(--muted);">No weekly schedule yet.</div>
+      :`<div style="font-size:13px;color:var(--muted);">No schedule yet.</div>
       <button class="btn btn-ghost" style="margin-top:10px;margin-bottom:0;font-size:12px;" onclick="setTab('workout',null)">Generate Schedule →</button>`}
   </div>
 
-  <!-- Water quick log -->
+  <!-- Water -->
   <div class="card">
     <div class="lbl">Hydration</div>
     <div style="display:flex;align-items:center;gap:12px;">
-      <svg width="90" height="90"><circle cx="45" cy="45" r="36" fill="none" stroke="var(--card2)" stroke-width="7"/><circle cx="45" cy="45" r="36" fill="none" stroke="var(--gold)" stroke-width="7" stroke-dasharray="${2*Math.PI*36*wpct/100} ${2*Math.PI*36}" stroke-linecap="round" transform="rotate(-90 45 45)"/><text x="45" y="40" text-anchor="middle" fill="var(--gold)" font-size="16" font-weight="800">${water}</text><text x="45" y="54" text-anchor="middle" fill="var(--muted)" font-size="10">/${wgoal}</text></svg>
+      <svg width="90" height="90"><circle cx="45" cy="45" r="36" fill="none" stroke="var(--card2)" stroke-width="7"/><circle cx="45" cy="45" r="36" fill="none" stroke="var(--gold)" stroke-width="7" stroke-dasharray="${2*Math.PI*36*wpct/100} ${2*Math.PI*36}" stroke-linecap="round" transform="rotate(-90 45 45)"/><text x="45" y="40" text-anchor="middle" fill="var(--gold)" font-size="16" font-weight="800">${water}</text><text x="45" y="54" text-anchor="middle" fill="var(--muted)" font-size="10">/8</text></svg>
       <div style="flex:1;">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">${water>=wgoal?'🎉 Goal hit!':wgoal-water+' more to go'}</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">${water>=8?'🎉 Goal hit!':8-water+' more to go'}</div>
         <button class="btn btn-gold" onclick="logWater(1)" style="margin-bottom:6px;">+ Log Glass</button>
         <button class="btn btn-ghost" onclick="logWater(-1)" style="padding:8px;font-size:12px;margin-bottom:0;">− Remove</button>
       </div>
@@ -517,62 +786,49 @@ function renderWorkout(){
   const sched=getSchedule();
   const todayPlan=sched?sched[todayDay()]:null;
   const isToday=todayPlan&&!todayPlan.isRest;
-
-  return `<div style="padding:16px;">
+  return`<div style="padding:16px;">
   <div class="h2" style="margin-bottom:4px;">Workout</div>
-  <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">${getProfile().equipment==='public'?'Public Gym':getProfile().equipment==='apartment'?'Apartment Gym':'Home'}</div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">${getProfile().equipment==='public'?'Public Gym':getProfile().equipment==='apartment'?'Apartment Gym':'Home'} · ${(getProfile().goals||[]).join(' & ')}</div>
 
-  <!-- Daily workout generator -->
-  <div class="card card-gold" style="margin-bottom:14px;">
+  <div class="card card-gold">
     <div class="lbl">Today · ${todayDay()}</div>
     ${isToday?`<div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:6px;">${todayPlan.focus}${todayPlan.hasCardio?' + Cardio':''}</div>`:''}
-    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">${isToday?'AI will generate exercises for your scheduled focus':'AI will target your unchecked muscle groups'}</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">${isToday?'AI generates exercises for your scheduled focus':'AI targets your unchecked muscle groups'}</div>
     <button class="btn btn-gold" id="todayBtn" onclick="startTodayWorkout()" style="margin-bottom:0;">⚡ Generate & Start Workout</button>
   </div>
 
-  <!-- Weekly schedule -->
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <div class="lbl" style="margin-bottom:0;">Weekly Schedule</div>
       <button onclick="buildSchedule()" id="schedBtn" style="background:none;border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--muted);font-size:11px;cursor:pointer;">↺ Rebuild</button>
     </div>
-    ${sched?renderScheduleRows(sched):`
-    <div style="text-align:center;padding:16px 0;">
-      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;">No schedule yet — AI will plan your week based on your profile and goals</div>
+    ${sched?DAYS7.map(day=>{
+      const d=sched[day];if(!d)return'';
+      const isT=day===todayDay();
+      return`<div class="sched-row">
+        <div class="sched-day ${isT?'today':''}">${day.slice(0,3).toUpperCase()}</div>
+        <div style="flex:1;font-size:13px;font-weight:600;${d.isRest?'color:var(--muted)':isT?'color:var(--gold)':''}">${d.isRest?'🌿 Rest':d.focus}</div>
+        <div style="display:flex;gap:4px;">
+          ${!d.isRest?`<span class="tag tag-muscle">${(d.focus||'').split(' ')[0]}</span>`:'<span class="tag tag-rest">Rest</span>'}
+          ${d.hasCardio?`<span class="tag tag-cardio">Cardio</span>`:''}
+        </div>
+      </div>`;}).join(''):`<div style="text-align:center;padding:16px 0;">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;">No schedule yet — AI plans your week</div>
       <button class="btn btn-gold" id="schedBtn" onclick="buildSchedule()" style="margin-bottom:0;">✨ Generate Weekly Schedule</button>
     </div>`}
   </div>
   </div>`;
 }
 
-function renderScheduleRows(sched){
-  const today=todayDay();
-  return DAYS7.map(day=>{
-    const d=sched[day];if(!d)return'';
-    const isT=day===today;
-    return`<div class="sched-row">
-      <div class="sched-day-name ${isT?'today':''}">${day.slice(0,3).toUpperCase()}</div>
-      <div class="sched-focus" style="${d.isRest?'color:var(--muted)':isT?'color:var(--gold)':''}">${d.isRest?'🌿 Rest':d.focus}</div>
-      <div class="sched-tags">
-        ${!d.isRest?`<span class="tag tag-muscle">${d.focus.split(' ')[0]}</span>`:'<span class="tag tag-rest">Rest</span>'}
-        ${d.hasCardio?`<span class="tag tag-cardio">Cardio</span>`:''}
-      </div>
-    </div>`;
-  }).join('');
-}
-
 function renderActiveWorkout(){
   const ex=activeWorkout.exercises?.[currentExIdx];
   const total=activeWorkout.exercises?.length||0;
   const isLast=currentExIdx>=total-1;
-  const hasCardio=activeWorkout.hasCardio;
-  const cardio=activeWorkout.cardio;
-
-  return `<div style="padding:16px;">
+  return`<div style="padding:16px;">
   <div style="text-align:center;margin-bottom:14px;">
     <div style="font-size:10px;color:var(--gold);letter-spacing:3px;">ACTIVE WORKOUT</div>
     <div style="font-size:20px;font-weight:800;margin:4px 0;">${activeWorkout.workoutName}</div>
-    <div style="font-size:12px;color:var(--muted);">Exercise ${currentExIdx+1} of ${total}${hasCardio?' + Cardio':''}</div>
+    <div style="font-size:12px;color:var(--muted);">Exercise ${currentExIdx+1} of ${total}${activeWorkout.hasCardio?' + Cardio':''}</div>
     <div class="prog-bg" style="margin:10px 0;"><div class="prog-fill" style="width:${Math.round((currentExIdx+1)/total*100)}%;background:var(--gold);"></div></div>
   </div>
   ${ex?`<div class="active-ex">
@@ -585,23 +841,66 @@ function renderActiveWorkout(){
     </div>
     ${ex.modification?`<div style="background:rgba(212,165,62,0.1);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--gold);">💡 ${ex.modification}</div>`:''}
   </div>`:''}
-  ${isLast&&hasCardio?`<div class="card card-gold" style="margin-bottom:12px;">
-    <div class="lbl" style="margin-bottom:6px;">Cardio After</div>
-    <div style="font-weight:700;font-size:15px;">${cardio?.type||'Cardio'}</div>
-    <div style="font-size:13px;color:var(--muted);">${cardio?.duration||''} · ${cardio?.intensity||''}</div>
+  ${isLast&&activeWorkout.hasCardio?`<div class="card card-green" style="margin-bottom:12px;">
+    <div class="lbl" style="margin-bottom:6px;">Next: Cardio</div>
+    <div style="font-weight:700;">${activeWorkout.cardio?.type||'Cardio'}</div>
+    <div style="font-size:13px;color:var(--muted);">${activeWorkout.cardio?.duration||''} · ${activeWorkout.cardio?.intensity||'Moderate'}</div>
   </div>`:''}
   <button class="btn btn-gold" onclick="nextEx(${isLast})">${isLast?'✅ Complete Workout':'Next Exercise →'}</button>
   <button class="btn btn-ghost" onclick="endWorkout()">End Workout Early</button>
   </div>`;
 }
 
-// ── LOG ───────────────────────────────────────────────────────────────────────
+// ── LOG (merged with nutrition) ───────────────────────────────────────────────
 function renderLog(){
-  const water=getWater();const meals=getMeals();
+  const water=getWater();
+  const meals=getMeals();
   const cal=meals.reduce((s,m)=>s+(parseInt(m.calories)||0),0);
   const pro=meals.reduce((s,m)=>s+(parseInt(m.protein)||0),0);
+  const carb=meals.reduce((s,m)=>s+(parseInt(m.carbs)||0),0);
+  const fat=meals.reduce((s,m)=>s+(parseInt(m.fat)||0),0);
+  const stats=calcStats();
+  const habits=['Ate enough protein','Drank enough water','Avoided processed food','Ate veggies with every meal','Had post-workout meal'];
+  const checked=getHabits();
+  const tips=nutritionTips[activeUser]||null;
+
+  const calPct=stats?Math.min(cal/stats.calTarget*100,100):0;
+  const proPct=stats?Math.min(pro/stats.proteinG*100,100):0;
+  const carbPct=stats?Math.min(carb/stats.carbG*100,100):0;
+  const fatPct=stats?Math.min(fat/stats.fatG*100,100):0;
+
   return`<div style="padding:16px;">
-  <div class="h2" style="margin-bottom:16px;">Daily Log</div>
+  <div class="h2" style="margin-bottom:16px;">Log & Nutrition</div>
+
+  <!-- Macro summary -->
+  ${stats?`<div class="card card-gold">
+    <div class="lbl">Today's Macros</div>
+    <div class="macro-row"><div class="macro-lbl">Calories</div><div class="macro-bar"><div class="macro-fill" style="width:${calPct}%;background:var(--gold);"></div></div><div class="macro-val" style="color:var(--gold);">${cal}/${stats.calTarget}</div></div>
+    <div class="macro-row"><div class="macro-lbl">Protein</div><div class="macro-bar"><div class="macro-fill" style="width:${proPct}%;background:var(--green);"></div></div><div class="macro-val" style="color:var(--green);">${pro}/${stats.proteinG}g</div></div>
+    <div class="macro-row"><div class="macro-lbl">Carbs</div><div class="macro-bar"><div class="macro-fill" style="width:${carbPct}%;background:var(--blue);"></div></div><div class="macro-val" style="color:var(--blue);">${carb}/${stats.carbG}g</div></div>
+    <div class="macro-row"><div class="macro-lbl">Fat</div><div class="macro-bar"><div class="macro-fill" style="width:${fatPct}%;background:var(--purple);"></div></div><div class="macro-val" style="color:var(--purple);">${fat}/${stats.fatG}g</div></div>
+  </div>`:''}
+
+  <!-- Food log -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div><div class="lbl" style="margin-bottom:2px;">Food Log</div><div style="font-size:16px;font-weight:800;color:var(--green);">${cal} kcal <span style="font-size:12px;color:var(--muted);font-weight:400;">· ${pro}g protein</span></div></div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="openFoodScanner()" style="background:var(--blue);color:#000;border:none;border-radius:8px;padding:8px 12px;font-weight:700;cursor:pointer;font-size:12px;">📷 Scan</button>
+        <button onclick="toggleMealForm()" style="background:var(--green);color:#000;border:none;border-radius:8px;padding:8px 12px;font-weight:700;cursor:pointer;font-size:12px;">+ Add</button>
+      </div>
+    </div>
+    <div id="mealFormWrap" style="display:none;background:var(--card2);border-radius:10px;padding:14px;margin-bottom:12px;"></div>
+    ${meals.map(m=>`<div class="meal-row">
+      <div><div style="font-weight:600;font-size:14px;">${m.name}</div><div style="font-size:11px;color:var(--muted);">${m.type} · ${m.time}</div></div>
+      <div style="text-align:right;">
+        <div style="color:var(--green);font-weight:700;">${m.calories||0} kcal</div>
+        <div style="font-size:11px;color:var(--muted);">${m.protein?m.protein+'g pro':''}${m.carbs?' · '+m.carbs+'g carb':''}</div>
+      </div>
+    </div>`).join('')||`<div style="text-align:center;color:var(--muted);font-size:13px;padding:8px;">No meals logged yet — scan or add manually</div>`}
+  </div>
+
+  <!-- Water -->
   <div class="card">
     <div class="lbl">Water</div>
     <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -610,103 +909,187 @@ function renderLog(){
       <button onclick="logWater(1)" style="width:44px;height:44px;background:var(--green);border:none;border-radius:10px;color:#000;font-size:20px;font-weight:800;cursor:pointer;">+</button>
     </div>
   </div>
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div><div class="lbl" style="margin-bottom:2px;">Food Log</div><div style="font-size:18px;font-weight:800;color:var(--green);">${cal} kcal <span style="font-size:13px;color:var(--muted);font-weight:400;">· ${pro}g protein</span></div></div>
-      <button onclick="document.getElementById('mealForm').style.display=document.getElementById('mealForm').style.display==='none'?'block':'none'" style="background:var(--green);color:#000;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;">+ Add</button>
-    </div>
-    <div id="mealForm" style="display:none;background:var(--card2);border-radius:10px;padding:14px;margin-bottom:12px;">
-      <input class="form-input" id="mName" placeholder="Meal name">
-      <div class="form-row"><input class="form-input" id="mCal" type="number" placeholder="Calories" style="margin-bottom:0;"><input class="form-input" id="mPro" type="number" placeholder="Protein (g)" style="margin-bottom:0;"></div>
-      <div style="height:8px;"></div>
-      <select class="form-select" id="mType"><option>Breakfast</option><option>Lunch</option><option selected>Dinner</option><option>Snack</option></select>
-      <button class="btn btn-green" onclick="addMeal()" style="margin-bottom:0;">Save</button>
-    </div>
-    ${meals.map(m=>`<div class="meal-row"><div><div style="font-weight:600;font-size:14px;">${m.name}</div><div style="font-size:11px;color:var(--muted);">${m.type} · ${m.time}</div></div><div style="text-align:right;"><div style="color:var(--green);font-weight:700;">${m.calories||0} kcal</div>${m.protein?`<div style="font-size:11px;color:var(--muted);">${m.protein}g pro</div>`:''}</div></div>`).join('')||`<div style="text-align:center;color:var(--muted);font-size:13px;padding:8px;">No meals logged yet</div>`}
-  </div></div>`;
-}
 
-// ── NUTRITION ─────────────────────────────────────────────────────────────────
-function renderNutrition(){
-  const habits=['Ate enough protein','Drank enough water','Avoided processed food','Ate veggies','Had post-workout meal'];
-  const checked=getHabits();
-  const tips=nutritionTips[activeUser]||null;
-  return`<div style="padding:16px;">
-  <div class="h2" style="margin-bottom:16px;">Nutrition</div>
+  <!-- Habits -->
   <div class="card card-gold">
     <div class="lbl">Daily Habits</div>
     ${habits.map(h=>`<div class="habit-row ${checked[h]?'done':''}" onclick="toggleHabit('${h}')"><div class="habit-check">${checked[h]?'✓':''}</div><span style="font-size:14px;">${h}</span></div>`).join('')}
   </div>
+
+  <!-- AI Nutrition Tips -->
   <div class="card">
     <div class="lbl">AI Nutrition Guidance</div>
     ${!tips?`<button class="btn btn-green" id="tipsBtn" onclick="loadTips()">✨ Get My Nutrition Tips</button>`:`
     <div style="font-size:13px;line-height:1.7;white-space:pre-wrap;">${tips}</div>
     <button class="btn btn-ghost" id="tipsBtn" onclick="loadTips()" style="margin-top:12px;margin-bottom:0;font-size:12px;">↺ Refresh Tips</button>`}
-  </div></div>`;
+  </div>
+  </div>`;
+}
+
+// ── MINDSET ───────────────────────────────────────────────────────────────────
+function renderMindset(){
+  const med=getTodayMed();
+  const streak=getMedStreak();
+  const fast=getFastState();
+  const p=getProfile();
+
+  return`<div style="padding:16px;">
+  <div class="h2" style="margin-bottom:4px;">Mindset</div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">Meditation · Fasting · Mental clarity</div>
+
+  <!-- Meditation -->
+  <div class="card card-purple" style="text-align:center;">
+    <div class="lbl">Meditation</div>
+    ${med.done?`
+    <div style="font-size:48px;margin-bottom:8px;">🧘</div>
+    <div style="font-size:16px;font-weight:700;color:var(--purple);">Done for today ✓</div>
+    <div style="font-size:13px;color:var(--muted);margin-top:4px;">${med.minutes} minutes · ${streak} day streak</div>
+    <button class="btn btn-ghost" onclick="resetMed();medSeconds=0;meditationLog['${activeUser}_${todayStr()}']=null;S.set('nf_meditation',meditationLog);render();" style="margin-top:12px;margin-bottom:0;font-size:12px;">Meditate Again</button>`:`
+    <div style="margin-bottom:14px;">
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:14px;flex-wrap:wrap;">
+        ${[5,10,15,20].map(m=>`<button onclick="medDuration=${m*60};document.querySelectorAll('[data-min]').forEach(b=>b.className='pill-btn'+(parseInt(b.dataset.min)===${m}?' on':''));resetMed();" data-min="${m}" class="pill-btn ${medDuration===m*60?'on':''}">${m} min</button>`).join('')}
+      </div>
+    </div>
+    <div class="med-circle ${medRunning?'active':''}" id="medCircle" onclick="${medRunning?'pauseMed()':'startMed()'}">
+      <div class="med-time" id="medTimeDisplay">${String(Math.floor(medDuration/60)).padStart(2,'0')}:00</div>
+      <div class="med-sub">${medRunning?'TAP TO PAUSE':'TAP TO START'}</div>
+    </div>
+    <div class="prog-bg" style="margin:14px 0 10px;"><div class="prog-fill" id="medProg" style="width:0%;background:var(--purple);"></div></div>
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <button class="btn btn-purple" id="medStartBtn" onclick="startMed()" style="margin-bottom:0;flex:1;">${medRunning?'Running...':'▶ Start'}</button>
+      <button class="btn btn-ghost" id="medPauseBtn" onclick="pauseMed()" style="display:none;margin-bottom:0;flex:1;">⏸ Pause</button>
+      <button class="btn btn-ghost" onclick="resetMed()" style="margin-bottom:0;padding:10px 14px;font-size:12px;">↺</button>
+    </div>
+    ${streak>0?`<div style="font-size:12px;color:var(--purple);margin-top:10px;">🔥 ${streak} day meditation streak</div>`:''}`}
+  </div>
+
+  <!-- Fasting -->
+  <div class="card card-teal">
+    <div class="lbl">Fasting · ${p.fastingWindow||'16:8'}</div>
+    ${fast.fasting?`
+    <div style="text-align:center;padding:10px 0;">
+      <svg width="120" height="120">
+        <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(20,184,166,0.15)" stroke-width="8"/>
+        <circle cx="60" cy="60" r="50" fill="none" stroke="var(--teal)" stroke-width="8"
+          stroke-dasharray="${2*Math.PI*50*fast.pct} ${2*Math.PI*50}" stroke-linecap="round"
+          transform="rotate(-90 60 60)"/>
+        <text x="60" y="55" text-anchor="middle" fill="var(--teal)" font-size="18" font-weight="900">${fmtFastTime(fast.hoursLeft)}</text>
+        <text x="60" y="72" text-anchor="middle" fill="#888" font-size="10">remaining</text>
+      </svg>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px;">Fasting for ${fmtFastTime(fast.elapsed||0)}</div>
+    </div>
+    <button class="btn btn-ghost" onclick="endFast()" style="margin-bottom:0;font-size:12px;">End Fast Early</button>`
+    :fast.canEat&&fast.start?`
+    <div style="font-size:16px;font-weight:700;color:var(--green);text-align:center;padding:10px 0;">✅ Eating Window Open</div>
+    <div style="font-size:13px;color:var(--muted);text-align:center;">${fmtFastTime(fast.eatWindowLeft||0)} left in eating window</div>
+    <button class="btn btn-teal" onclick="startFast()" style="margin-top:12px;margin-bottom:0;">Start Next Fast</button>`
+    :`<div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Start your fast to begin tracking your ${p.fastingWindow||'16:8'} window</div>
+    <button class="btn btn-teal" onclick="startFast()" style="margin-bottom:0;">⏱ Start Fast Now</button>`}
+    <div style="margin-top:12px;">
+      <div style="font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:6px;">CHANGE WINDOW</div>
+      <div style="display:flex;gap:6px;">
+        ${['14:10','16:8','18:6','20:4'].map(w=>`<button onclick="profiles[activeUser].fastingWindow='${w}';S.set('nf_profiles',profiles);render();" style="padding:5px 10px;border:1px solid ${(p.fastingWindow||'16:8')===w?'var(--teal)':'var(--border)'};border-radius:16px;background:${(p.fastingWindow||'16:8')===w?'rgba(20,184,166,0.15)':'var(--card2)'};color:${(p.fastingWindow||'16:8')===w?'var(--teal)':'var(--muted)'};font-size:11px;cursor:pointer;">${w}</button>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <!-- Mindset tips -->
+  <div class="card">
+    <div class="lbl">Daily Reflection</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.7;">
+      ${['Start with 3 deep breaths before getting out of bed','Review your North Star before opening your phone','Write one thing you\'re grateful for today','Set your one most important intention for today'].map(t=>`<div style="padding:8px 0;border-bottom:1px solid var(--border);">💭 ${t}</div>`).join('')}
+    </div>
+  </div>
+  </div>`;
 }
 
 // ── PROGRESS ──────────────────────────────────────────────────────────────────
 function renderProgress(){
-  const now=new Date();
   const monDate=new Date(getMon());
   const weekDays=Array.from({length:7},(_,i)=>{const d=new Date(monDate);d.setDate(monDate.getDate()+i);return d.toISOString().split('T')[0];});
   const worked=weekDays.map(d=>workoutLog.some(l=>l.user===activeUser&&l.date===d));
   const allLogs=workoutLog.filter(l=>l.user===activeUser);
-  const bp=getBP();
-  const missing=getMissing();
+  const bp=getBP();const missing=getMissing();
+  const stats=calcStats();const p=getProfile();
 
   return`<div style="padding:16px;">
   <div class="h2" style="margin-bottom:16px;">Progress</div>
 
+  ${stats&&p.weight?`<div class="card card-gold">
+    <div class="lbl">Body Stats</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div style="text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--gold);">${p.weight}<span style="font-size:12px;font-weight:400;"> lbs</span></div><div style="font-size:10px;color:var(--muted);">Current Weight</div></div>
+      <div style="text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--green);">${p.goalWeight||'—'}<span style="font-size:12px;font-weight:400;"> lbs</span></div><div style="font-size:10px;color:var(--muted);">Goal Weight</div></div>
+    </div>
+    ${p.weight&&p.goalWeight?`<div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:8px;">${p.weight>p.goalWeight?`${p.weight-p.goalWeight} lbs to goal`:'🎉 Goal reached!'}</div>
+    <div class="prog-bg"><div class="prog-fill" style="width:${Math.min(100,Math.max(0,100-((p.weight-p.goalWeight)/(p.weight*0.2))*100))}%;background:var(--green);"></div></div>`:''}
+    <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:11px;color:var(--muted);">
+      <span>BMR: ${stats.bmr} kcal</span><span>TDEE: ${stats.tdee} kcal</span><span>Target: ${stats.calTarget} kcal</span>
+    </div>
+    <button onclick="openSetup()" style="margin-top:10px;background:none;border:1px solid var(--border);border-radius:6px;padding:6px 12px;color:var(--muted);font-size:11px;cursor:pointer;">⚙️ Update Stats</button>
+  </div>`:''}
+
   <div class="card">
     <div class="lbl">This Week</div>
     <div style="display:flex;gap:4px;margin-bottom:6px;">
-      ${DAYS3.map((d,i)=>`<div style="flex:1;text-align:center;">
+      ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d,i)=>`<div style="flex:1;text-align:center;">
         <div style="height:48px;border-radius:8px;background:${worked[i]?'rgba(212,165,62,0.2)':'var(--card2)'};border:1px solid ${worked[i]?'var(--gold)':'var(--border)'};display:flex;align-items:center;justify-content:center;margin-bottom:4px;">${worked[i]?'<span style="font-size:14px;">✓</span>':''}</div>
         <div style="font-size:9px;color:var(--muted);">${d}</div>
       </div>`).join('')}
     </div>
-    <div style="font-size:12px;color:var(--muted);text-align:center;">${worked.filter(Boolean).length} of ${getProfile().daysPerWeek} planned workouts done</div>
+    <div style="font-size:12px;color:var(--muted);text-align:center;">${worked.filter(Boolean).length} of ${p.daysPerWeek||4} planned workouts done</div>
   </div>
 
   <div class="card card-gold">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div class="lbl" style="margin-bottom:0;">Muscle Groups This Week</div>
+      <div class="lbl" style="margin-bottom:0;">Muscle Groups · This Week</div>
       <div style="font-size:10px;color:var(--muted);">Resets Monday</div>
     </div>
     <div class="bp-grid" style="margin-bottom:10px;">
       ${BODY_PARTS.map(b=>`<div class="bp-item ${bp[b.id]?'done':''}" onclick="toggleBP('${b.id}')"><div class="bp-check">${bp[b.id]?'✓':''}</div><span style="font-size:11px;">${b.icon} ${b.label}</span></div>`).join('')}
     </div>
-    <div style="font-size:12px;color:var(--muted);text-align:center;">${missing.length?'Still need: '+missing.join(', '):'🎉 All muscle groups hit this week!'}</div>
+    <div style="font-size:12px;color:var(--muted);text-align:center;">${missing.length?'Still need: '+missing.join(', '):'🎉 All groups hit this week!'}</div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-    <div class="card" style="text-align:center;padding:14px 10px;margin-bottom:0;">
-      <div style="font-size:22px;">🔥</div>
-      <div style="font-size:22px;font-weight:800;color:var(--gold);">${worked.filter(Boolean).length}</div>
-      <div style="font-size:10px;color:var(--muted);">this week</div>
-    </div>
-    <div class="card" style="text-align:center;padding:14px 10px;margin-bottom:0;">
-      <div style="font-size:22px;">🏆</div>
-      <div style="font-size:22px;font-weight:800;color:var(--gold);">${allLogs.length}</div>
-      <div style="font-size:10px;color:var(--muted);">all time</div>
-    </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+    <div class="card" style="text-align:center;padding:12px 8px;margin-bottom:0;"><div style="font-size:20px;">🔥</div><div style="font-size:20px;font-weight:800;color:var(--gold);">${worked.filter(Boolean).length}</div><div style="font-size:9px;color:var(--muted);">this week</div></div>
+    <div class="card" style="text-align:center;padding:12px 8px;margin-bottom:0;"><div style="font-size:20px;">🏆</div><div style="font-size:20px;font-weight:800;color:var(--gold);">${allLogs.length}</div><div style="font-size:9px;color:var(--muted);">all time</div></div>
+    <div class="card" style="text-align:center;padding:12px 8px;margin-bottom:0;"><div style="font-size:20px;">🧘</div><div style="font-size:20px;font-weight:800;color:var(--purple);">${getMedStreak()}</div><div style="font-size:9px;color:var(--muted);">med streak</div></div>
   </div>
 
   <div class="card">
     <div class="lbl">Recent Workouts</div>
-    ${allLogs.length?[...allLogs].reverse().slice(0,6).map(l=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);"><div style="font-weight:600;font-size:13px;">${l.name}</div><div style="font-size:11px;color:var(--muted);">${l.date}</div></div>`).join(''):`<div style="text-align:center;color:var(--muted);font-size:13px;padding:10px;">No workouts yet. Start your first session!</div>`}
-  </div></div>`;
+    ${allLogs.length?[...allLogs].reverse().slice(0,6).map(l=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);"><div style="font-weight:600;font-size:13px;">${l.name}</div><div style="font-size:11px;color:var(--muted);">${l.date}</div></div>`).join(''):`<div style="text-align:center;color:var(--muted);font-size:13px;padding:10px;">No workouts yet!</div>`}
+  </div>
+  </div>`;
 }
 
 // ── ACTIONS ───────────────────────────────────────────────────────────────────
 function logWater(d){setWater(getWater()+d);render();}
-function toggleBP(id){const current=getBP()[id]||false;setBP(id,!current);render();}
+function toggleBP(id){setBP(id,!getBP()[id]);render();}
 function toggleHabit(h){const habits=getHabits();habits[h]=!habits[h];setHabits(habits);render();}
+
+function toggleMealForm(){
+  const w=document.getElementById('mealFormWrap');
+  if(!w)return;
+  if(w.style.display==='none'||!w.innerHTML.trim()){
+    w.style.display='block';
+    showManualForm();
+  }else{w.style.display='none';}
+}
+
 function addMeal(){
   const name=document.getElementById('mName')?.value?.trim();if(!name)return;
   const meals=getMeals();
-  meals.push({name,calories:document.getElementById('mCal')?.value||'0',protein:document.getElementById('mPro')?.value||'',type:document.getElementById('mType')?.value||'Meal',time:new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})});
+  meals.push({
+    name,
+    calories:document.getElementById('mCal')?.value||'0',
+    protein:document.getElementById('mPro')?.value||'',
+    carbs:document.getElementById('mCarb')?.value||'',
+    fat:document.getElementById('mFat')?.value||'',
+    type:document.getElementById('mType')?.value||'Meal',
+    time:new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})
+  });
   setMeals(meals);render();
 }
 
@@ -715,14 +1098,8 @@ async function buildSchedule(){
   const btn=document.getElementById('schedBtn');
   if(btn){btn.textContent='Building...';btn.disabled=true;}
   const result=await generateWeekSchedule();
-  if(result){
-    weekSchedules[`${activeUser}_${getMon()}`]=result;
-    S.set('nf_schedules',weekSchedules);
-    render();
-  }else{
-    if(btn){btn.textContent='Try Again';btn.disabled=false;}
-    alert('Could not generate schedule. Check your API key and try again.');
-  }
+  if(result){weekSchedules[`${activeUser}_${getMon()}`]=result;S.set('nf_schedules',weekSchedules);render();}
+  else{if(btn){btn.textContent='Try Again';btn.disabled=false;}alert('Could not generate schedule. Check your API key.');}
 }
 
 async function quickStart(){setTab('workout',null);await startTodayWorkout();}
@@ -732,61 +1109,47 @@ async function startTodayWorkout(){
   const btn=document.getElementById('todayBtn');
   if(btn){btn.textContent='⚡ Generating...';btn.disabled=true;}
   const workout=await generateTodayWorkout();
-  if(workout){
-    activeWorkout=workout;currentExIdx=0;
-    setTab('workout',null);
-  }else{
-    if(btn){btn.textContent='⚡ Generate & Start Workout';btn.disabled=false;}
-    alert('Could not generate workout. Check your API key.');
-  }
+  if(workout){activeWorkout=workout;currentExIdx=0;setTab('workout',null);}
+  else{if(btn){btn.textContent='⚡ Generate & Start Workout';btn.disabled=false;}alert('Could not generate workout. Check your API key.');}
 }
 
 function nextEx(isLast){
   if(isLast){
-    // Log it
     workoutLog.push({user:activeUser,date:todayStr(),name:activeWorkout.workoutName});
     S.set('nf_wlog',workoutLog);
-    // Auto-check body parts
     (activeWorkout.targetMuscles||[]).forEach(m=>{
       const bp=BODY_PARTS.find(b=>b.label.toLowerCase()===m.toLowerCase()||m.toLowerCase().includes(b.id));
       if(bp)setBP(bp.id,true);
     });
     if(activeWorkout.hasCardio)setBP('cardio',true);
-    // Tomorrow suggestion
     const sched=getSchedule();
     const tomorrow=DAYS7[(DAYS7.indexOf(todayDay())+1)%7];
     const tomorrowPlan=sched?sched[tomorrow]:null;
-    let tomorrowMsg='';
-    if(tomorrowPlan){
-      tomorrowMsg=tomorrowPlan.isRest?` Tomorrow is a rest day — recover well.`:` Tomorrow: ${tomorrowPlan.focus}.`;
-    }
+    const tomorrowMsg=tomorrowPlan?tomorrowPlan.isRest?' Tomorrow is rest day — recover well.':` Tomorrow: ${tomorrowPlan.focus}.`:'';
     speak(`${activeWorkout.workoutName} complete!${tomorrowMsg} Great work!`);
     pushFitness();
     activeWorkout=null;currentExIdx=0;
     setTab('home',null);
   }else{currentExIdx++;render();}
 }
-
 function endWorkout(){activeWorkout=null;currentExIdx=0;render();}
 
 async function loadTips(){
   if(!requireKey())return;
   const btn=document.getElementById('tipsBtn');
   if(btn){btn.textContent='Loading...';btn.disabled=true;}
-  const p=getProfile();
-  const isWife=activeUser==='Wife';
+  const p=getProfile();const stats=calcStats();const isWife=activeUser==='Wife';
   const prompt=isWife
-    ?'Personalized nutrition for a postpartum woman. Include: daily calories, protein target, 3 food recommendations, pre/post workout nutrition. Concise.'
-    :`Personalized nutrition for a man wanting to ${p.goals.join(', ')}. Workouts with ${EQ[p.equipment]}. Include: daily calories, protein target, 3 food recommendations, pre/post workout tips. Concise.`;
-  const result=await callAI([{role:'user',content:prompt}],'You are a nutrition expert. Be concise and practical.',800);
+    ?'Personalized nutrition for a postpartum woman. Include: daily calories, protein target, 3 food recs, pre/post workout tips. Concise.'
+    :`Personalized nutrition for a man wanting to ${(p.goals||['muscle']).join(', ')}. Equipment: ${EQ[p.equipment]}.${stats?` Daily calorie target: ${stats.calTarget} kcal. Protein target: ${stats.proteinG}g. Weight: ${p.weight}lbs.`:''} Include specific food recommendations and meal timing. Concise.`;
+  const result=await callAI([{role:'user',content:prompt}],'You are a nutrition expert. Be specific and practical.',800);
   if(result&&!result.startsWith('Error')){nutritionTips[activeUser]=result;S.set('nf_ntips',nutritionTips);}
   render();
 }
 
 // ── RAILWAY PUSH ──────────────────────────────────────────────────────────────
 function pushFitness(){
-  const wlogs=getWeekLogs();
-  const sched=getSchedule();
+  const wlogs=getWeekLogs();const sched=getSchedule();
   const todayPlan=sched?sched[todayDay()]:null;
   fetch(`${RAILWAY}/api/fitness/summary`,{
     method:'POST',headers:{'Content-Type':'application/json'},
@@ -794,18 +1157,14 @@ function pushFitness(){
   }).catch(()=>{});
 }
 
-// ── AI COACH CHAT ─────────────────────────────────────────────────────────────
+// ── AI COACH ──────────────────────────────────────────────────────────────────
 function openChat(){if(!requireKey())return;document.getElementById('chatOverlay').style.display='flex';renderChatUI();}
 function closeChat(){document.getElementById('chatOverlay').style.display='none';}
 function renderChatUI(){
   const c=document.getElementById('chatMsgs');
   if(!chatHistory.length){
-    const starters=activeUser==='Wife'?[
-      'What exercises are safe postpartum?','How do I rebuild my core after pregnancy?','What should I eat to support recovery?','I only have 20 min — what should I do?'
-    ]:[
-      'How do I maximize gains with dumbbells?','What should I eat on workout days vs rest days?','I\'m sore — should I still work out?','How do I break through a plateau?'
-    ];
-    c.innerHTML=`<div style="text-align:center;margin-bottom:16px;padding-top:10px;"><div style="font-size:36px;margin-bottom:8px;">🤖</div><div style="color:var(--muted);font-size:13px;">Ask your AI coach anything</div></div>${starters.map(s=>`<button style="width:100%;text-align:left;background:#1a1a1a;border:1px solid rgba(212,165,62,0.2);border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:13px;cursor:pointer;color:#fff;" onclick="sendChatMsg('${s}')">${s}</button>`).join('')}`;
+    const starters=activeUser==='Wife'?['What exercises are safe postpartum?','How do I rebuild core strength?','What should I eat to support recovery?','I only have 20 min — what should I do?']:['How do I maximize gains with dumbbells?','What should I eat on workout vs rest days?','I\'m sore — should I still work out?','How do I break through a plateau?'];
+    c.innerHTML=`<div style="text-align:center;margin-bottom:16px;padding-top:10px;"><div style="font-size:36px;margin-bottom:8px;">🤖</div><div style="color:var(--muted);font-size:13px;">Ask your AI coach anything</div></div>${starters.map(s=>`<button style="width:100%;text-align:left;background:#1a1a1a;border:1px solid rgba(212,165,62,0.2);border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:13px;cursor:pointer;color:#fff;" onclick="sendChatMsg('${s.replace(/'/g,"\\'")} ')">${s}</button>`).join('')}`;
   }else{
     c.innerHTML=chatHistory.map(m=>`<div style="display:flex;justify-content:${m.role==='user'?'flex-end':'flex-start'};margin-bottom:10px;"><div class="bubble-${m.role==='user'?'user':'ai'}">${m.content}</div></div>`).join('');
     c.scrollTop=c.scrollHeight;
@@ -814,26 +1173,23 @@ function renderChatUI(){
 async function sendChat(){const inp=document.getElementById('chatInput');const t=inp?.value?.trim();if(!t||chatBusy)return;inp.value='';sendChatMsg(t);}
 async function sendChatMsg(text){
   if(chatBusy)return;
-  chatHistory.push({role:'user',content:text});
-  chatBusy=true;renderChatUI();
-  const p=getProfile();
+  chatHistory.push({role:'user',content:text});chatBusy=true;renderChatUI();
+  const p=getProfile();const stats=calcStats();
   const sys=activeUser==='Wife'
     ?'You are a supportive postpartum fitness coach. Be encouraging and safe.'
-    :`You are a personal fitness coach. Equipment: ${EQ[p.equipment]}. Goals: ${p.goals.join(', ')}. Be direct and motivating.`;
-  const msgs=chatHistory.map(m=>({role:m.role,content:m.content}));
-  const reply=await callAI(msgs,sys,800);
-  chatHistory.push({role:'assistant',content:reply});
-  chatBusy=false;renderChatUI();
+    :`You are a personal fitness coach. Equipment: ${EQ[p.equipment]}. Goals: ${(p.goals||['muscle']).join(', ')}.${stats?` User stats: ${p.weight}lbs, ${p.height}, target ${stats.calTarget} kcal/day, ${stats.proteinG}g protein/day.`:''} Be direct and motivating.`;
+  const reply=await callAI(chatHistory.map(m=>({role:m.role,content:m.content})),sys,800);
+  chatHistory.push({role:'assistant',content:reply});chatBusy=false;renderChatUI();
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 function init(){
   if(!KEY)document.getElementById('keyModal').classList.add('open');
+  else{const h=document.getElementById('storedKeyHint');if(h){h.style.display='block';h.textContent='Active: '+KEY.slice(0,18)+'...';}}
   if(!S.get('nf_profiles',null))document.getElementById('setupScreen').classList.add('open');
   updateHeader();render();
   setTimeout(pushFitness,2000);
 }
-
 init();
 </script>
 </body>
