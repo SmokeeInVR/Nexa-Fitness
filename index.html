@@ -48,19 +48,25 @@ body { margin: 0; background: #0a0a0a; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script>
 // ── API Key Management ────────────────────────────────────────────────────────
-// Check shared key across all Nexa apps
-let NEXA_KEY = localStorage.getItem('nexafit_key') || localStorage.getItem('nexa_api_key') || localStorage.getItem('fcc_key') || '';
+// Load from any Nexa shared key location
+let NEXA_KEY = localStorage.getItem('nexafit_key') || localStorage.getItem('nexa_api_key') || localStorage.getItem('nexa_key') || localStorage.getItem('fcc_key') || '';
 
 function saveKey() {
   const v = document.getElementById('apiKeyInput').value.trim();
   if (!v.startsWith('sk-')) { document.getElementById('keyErr').style.display = 'block'; return; }
   NEXA_KEY = v;
+  // Save to all shared Nexa key locations
   localStorage.setItem('nexafit_key', v);
-  localStorage.setItem('nexa_api_key', v); // shared across all Nexa apps
+  localStorage.setItem('nexa_api_key', v);
+  localStorage.setItem('nexa_key', v);
+  localStorage.setItem('fcc_key', v);
   document.getElementById('keyModal').classList.remove('open');
 }
 function clearKey() { NEXA_KEY = ''; localStorage.removeItem('nexafit_key'); document.getElementById('apiKeyInput').value = ''; }
-function requireKey() { return true; } // AI powered by Railway
+function requireKey() {
+  if (!NEXA_KEY) { document.getElementById('keyModal').classList.add('open'); return false; }
+  return true;
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const todayFn = () => new Date().toISOString().split('T')[0];
@@ -309,6 +315,7 @@ function WorkoutTab({ user, plan, setPlan, css, C }) {
   const [currentEx, setCurrentEx] = useState(0);
 
   const generate = async () => {
+    if (!requireKey()) return;
     setLoading(true);
     const result = await generatePlan(user);
     if (result) { setPlan(result); storage.set(`plan_${user}`, result); }
@@ -577,7 +584,8 @@ function NexaFit() {
         h('div', { style: { fontSize: 11, color: '#aaa' } }, user === 'Wife' ? '👩 Wife\'s Plan' : '👨 My Plan'),
       ),
       h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
-        h('button', { onClick: () => setDarkMode(d => !d), style: { background: darkMode ? theme.gold + '33' : '#ffffff22', border: `1px solid ${theme.gold}44`, borderRadius: 20, padding: '5px 12px', color: darkMode ? theme.gold : '#ffffff', fontSize: 11, fontWeight: '700', cursor: 'pointer' } }, darkMode ? '☀️ Light' : '🌙 Dark'),
+        h('button', { onClick: () => document.getElementById('keyModal').classList.add('open'), style: { background: 'transparent', border: `1px solid ${theme.gold}44`, borderRadius: 20, padding: '5px 12px', color: theme.gold, fontSize: 11, fontWeight: '700', cursor: 'pointer' } }, '🔑'),
+          h('button', { onClick: () => setDarkMode(d => !d), style: { background: darkMode ? theme.gold + '33' : '#ffffff22', border: `1px solid ${theme.gold}44`, borderRadius: 20, padding: '5px 12px', color: darkMode ? theme.gold : '#ffffff', fontSize: 11, fontWeight: '700', cursor: 'pointer' } }, darkMode ? '☀️ Light' : '🌙 Dark'),
         ...['Husband','Wife'].map(u => h('button', { key: u, onClick: () => setUser(u), style: { background: user === u ? theme.gold : 'transparent', color: user === u ? '#000' : '#ffffff88', border: `1px solid ${user === u ? theme.gold : '#ffffff22'}`, borderRadius: 20, padding: '5px 12px', fontSize: 11, fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s' } }, u === 'Husband' ? 'Me' : 'Wife')),
       ),
     ),
