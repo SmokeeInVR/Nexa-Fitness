@@ -60,10 +60,7 @@ function saveKey() {
   document.getElementById('keyModal').classList.remove('open');
 }
 function clearKey() { NEXA_KEY = ''; localStorage.removeItem('nexafit_key'); document.getElementById('apiKeyInput').value = ''; }
-function requireKey() {
-  if (!NEXA_KEY) { document.getElementById('keyModal').classList.add('open'); return false; }
-  return true;
-}
+function requireKey() { return true; } // AI powered by Railway
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const todayFn = () => new Date().toISOString().split('T')[0];
@@ -139,14 +136,12 @@ function pushFitnessToRailway(user, todayWorkout, weeklyCount, waterToday, strea
 
 // ── API ───────────────────────────────────────────────────────────────────────
 async function askClaude(prompt, systemPrompt) {
-  if (!requireKey()) return null;
   try {
-    // Route through Railway proxy for mobile PWA compatibility
+    // Route through Railway proxy - server uses its own Anthropic key
     const res = await fetch(`${RAILWAY_URL}/api/ai/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        apiKey: NEXA_KEY,
         system: systemPrompt || 'You are a knowledgeable personal fitness coach. Be concise, practical, and motivating.',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 1000,
@@ -314,7 +309,6 @@ function WorkoutTab({ user, plan, setPlan, css, C }) {
   const [currentEx, setCurrentEx] = useState(0);
 
   const generate = async () => {
-    if (!requireKey()) return;
     setLoading(true);
     const result = await generatePlan(user);
     if (result) { setPlan(result); storage.set(`plan_${user}`, result); }
@@ -481,7 +475,6 @@ function NutritionTab({ user, css, C }) {
   };
 
   const getTips = async () => {
-    if (!requireKey()) return;
     setLoading(true);
     const prompt = user === 'Wife'
       ? 'Give personalized nutrition advice for a postpartum woman focusing on rebuilding strength and losing baby weight. Include: recommended daily calories, protein target, 3 specific food recommendations, pre and post workout nutrition tips. Be concise and practical.'
