@@ -141,13 +141,15 @@ function pushFitnessToRailway(user, todayWorkout, weeklyCount, waterToday, strea
 async function askClaude(prompt, systemPrompt) {
   if (!requireKey()) return null;
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    // Route through Railway proxy for mobile PWA compatibility
+    const res = await fetch(`${RAILWAY_URL}/api/ai/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': NEXA_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6', max_tokens: 1000,
+        apiKey: NEXA_KEY,
         system: systemPrompt || 'You are a knowledgeable personal fitness coach. Be concise, practical, and motivating.',
         messages: [{ role: 'user', content: prompt }],
+        max_tokens: 1000,
       }),
     });
     const data = await res.json();
