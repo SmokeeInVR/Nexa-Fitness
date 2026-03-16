@@ -167,9 +167,20 @@ async function generatePlan(user) {
   const prompt = isWife
     ? `Generate a weekly workout plan for a postpartum woman getting back into fitness. Home equipment only: 25lb dumbbells, ab roller, walking treadmill. Goals: rebuild strength, lose baby weight, general health. Max 25 minutes per workout. 3 days per week. Return ONLY a JSON object like: {"Monday":{"isRestDay":true,"restDayActivity":"10 min gentle walk"},"Tuesday":{"isRestDay":false,"workoutName":"Upper Body","targetMuscles":["Chest","Arms"],"duration":"20 min","exercises":[{"name":"Dumbbell Curl","sets":3,"reps":"12","weight":"15lb","modification":"Sit on chair if needed"}]},...} for all 7 days.`
     : `Generate a weekly workout plan for a man wanting to build muscle, lose weight, and improve health. Has gym membership AND home equipment: chest press machine, 25lb dumbbells, ab roller, walking treadmill. 3-4 days per week, flexible. Return ONLY a JSON object like: {"Monday":{"isRestDay":false,"workoutName":"Chest & Triceps","targetMuscles":["Chest","Triceps"],"duration":"45 min","exercises":[{"name":"Bench Press","sets":4,"reps":"8-10","weight":"Start moderate","modification":"Use chest press machine at home"}]},"Tuesday":{"isRestDay":true,"restDayActivity":"20 min treadmill walk"},...} for all 7 days.`;
-  const res = await askClaude(prompt, 'Return only valid JSON, no markdown, no explanation.');
+  const res = await askClaude(prompt, 'Return only valid JSON, no markdown, no explanation. The response must be a single valid JSON object starting with { and ending with }.');
   if (!res) return null;
-  try { const clean = res.replace(/```json|```/g, '').trim(); return JSON.parse(clean); } catch { return null; }
+  try {
+    // Try direct parse first
+    const clean = res.replace(/```json|```/g, '').trim();
+    try { return JSON.parse(clean); } catch {}
+    // Find JSON object in response
+    const start = clean.indexOf('{');
+    const end = clean.lastIndexOf('}');
+    if (start !== -1 && end !== -1) {
+      return JSON.parse(clean.slice(start, end + 1));
+    }
+    return null;
+  } catch (e) { console.error('Plan parse error:', e, res); return null; }
 }
 
 // ── React App ─────────────────────────────────────────────────────────────────
@@ -354,8 +365,8 @@ function WorkoutTab({ user, plan, setPlan, css, C }) {
             const weekCount = allLogs.filter(w => new Date(w.date) >= weekStart2).length;
             const wData = storage.get('waterData', {});
             const todayW = wData[todayFn()] || 0;
-            pushFitnessToRailway(user, d.workoutName, weekCount, todayW, weekCount);
-            speak(`${d.workoutName} complete. ${weekCount} workouts this week. Let's go!`);
+            pushFitnessToRailway(user, activeWorkout.workoutName, weekCount, todayW, weekCount);
+            speak(`${activeWorkout.workoutName} complete. ${weekCount} workouts this week. Let's go!`);
             setActiveWorkout(null); setCurrentEx(0);
           } else { setCurrentEx(c => c + 1); }
         },
@@ -483,12 +494,14 @@ function NutritionTab({ user, css, C }) {
   };
 
   const getTips = async () => {
+    if (!requireKey()) return;
     setLoading(true);
     const prompt = user === 'Wife'
       ? 'Give personalized nutrition advice for a postpartum woman focusing on rebuilding strength and losing baby weight. Include: recommended daily calories, protein target, 3 specific food recommendations, pre and post workout nutrition tips. Be concise and practical.'
       : 'Give personalized nutrition advice for a man wanting to build muscle, lose weight, and improve health. He works out 3-5x per week. Include: recommended daily calories, protein target, 3 specific food recommendations, pre and post workout nutrition tips. Be concise and practical.';
     const result = await askClaude(prompt);
     if (result) { setTips(result); storage.set(`nutrition_${user}`, result); }
+    else { setTips('Could not load tips. Check your API key and try again.'); }
     setLoading(false);
   };
 
