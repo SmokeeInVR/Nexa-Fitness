@@ -148,6 +148,7 @@ async function askClaude(prompt, systemPrompt) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        apiKey: NEXA_KEY,
         system: systemPrompt || 'You are a knowledgeable personal fitness coach. Be concise, practical, and motivating.',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 1000,
