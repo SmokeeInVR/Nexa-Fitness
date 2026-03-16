@@ -48,13 +48,15 @@ body { margin: 0; background: #0a0a0a; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script>
 // ── API Key Management ────────────────────────────────────────────────────────
-let NEXA_KEY = localStorage.getItem('nexafit_key') || '';
+// Check shared key across all Nexa apps
+let NEXA_KEY = localStorage.getItem('nexafit_key') || localStorage.getItem('nexa_api_key') || localStorage.getItem('fcc_key') || '';
 
 function saveKey() {
   const v = document.getElementById('apiKeyInput').value.trim();
   if (!v.startsWith('sk-')) { document.getElementById('keyErr').style.display = 'block'; return; }
   NEXA_KEY = v;
   localStorage.setItem('nexafit_key', v);
+  localStorage.setItem('nexa_api_key', v); // shared across all Nexa apps
   document.getElementById('keyModal').classList.remove('open');
 }
 function clearKey() { NEXA_KEY = ''; localStorage.removeItem('nexafit_key'); document.getElementById('apiKeyInput').value = ''; }
