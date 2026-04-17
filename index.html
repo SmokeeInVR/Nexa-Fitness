@@ -659,7 +659,7 @@ Goals: ${(p.goals||['muscle']).join(', ')}. ${isWife?'Postpartum recovery.':''}
 Return ONLY JSON for all 7 days:
 {"Monday":{"isRest":false,"focus":"Chest & Triceps","hasCardio":true,"cardioNote":"15 min treadmill"},"Tuesday":{"isRest":true,"note":"Active recovery"},...}
 Rules: ${p.daysPerWeek} workout days, rest of days are rest. Spread muscle groups. No back-to-back heavy days.`;
-  const res=await callAI([{role:'user',content:prompt}],'Return only valid JSON. No markdown. Start with {',600);
+  const res=await callAI([{role:'user',content:prompt}],'Return only valid JSON. No markdown. Start with {',2000);  // Increased from 600 to 2000 for full week JSON
   console.log('Weekly schedule response:',res?.substring?.(0,100));
   if(!res||res.startsWith?.('Error'))return null;
   try{
