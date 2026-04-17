@@ -660,13 +660,14 @@ Return ONLY JSON for all 7 days:
 {"Monday":{"isRest":false,"focus":"Chest & Triceps","hasCardio":true,"cardioNote":"15 min treadmill"},"Tuesday":{"isRest":true,"note":"Active recovery"},...}
 Rules: ${p.daysPerWeek} workout days, rest of days are rest. Spread muscle groups. No back-to-back heavy days.`;
   const res=await callAI([{role:'user',content:prompt}],'Return only valid JSON. No markdown. Start with {',600);
-  if(!res||res.startsWith('Error'))return null;
+  console.log('Weekly schedule response:',res?.substring?.(0,100));
+  if(!res||res.startsWith?.('Error'))return null;
   try{
     const clean=res.replace(/```json|```/g,'').trim();
     const s=clean.indexOf('{');const e=clean.lastIndexOf('}');
     if(s!==-1&&e!==-1)return JSON.parse(clean.slice(s,e+1));
     return JSON.parse(clean);
-  }catch(err){return null;}
+  }catch(err){console.error('Parse error:',err,res);return null;}
 }
 
 async function generateTodayWorkout(){
@@ -1133,9 +1134,15 @@ async function buildSchedule(){
   if(!requireKey())return;
   const btn=document.getElementById('schedBtn');
   if(btn){btn.textContent='Building...';btn.disabled=true;}
-  const result=await generateWeekSchedule();
-  if(result){weekSchedules[`${activeUser}_${getMon()}`]=result;S.set('nf_schedules',weekSchedules);render();}
-  else{if(btn){btn.textContent='Try Again';btn.disabled=false;}alert('Could not generate schedule. Check your API key.');}
+  try{
+    const result=await generateWeekSchedule();
+    if(result){weekSchedules[`${activeUser}_${getMon()}`]=result;S.set('nf_schedules',weekSchedules);render();}
+    else{if(btn){btn.textContent='Try Again';btn.disabled=false;}alert('Could not parse schedule. Try again.');}
+  }catch(e){
+    console.error('Schedule error:',e);
+    if(btn){btn.textContent='Try Again';btn.disabled=false;}
+    alert('Error: '+e.message);
+  }
 }
 
 async function quickStart(){setTab('workout',null);await startTodayWorkout();}
