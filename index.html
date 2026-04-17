@@ -492,7 +492,7 @@ async function callAI(messages,system,maxTokens=1000){
     });
     const d=await res.json();
     if(!res.ok)throw new Error(d.message||res.status);
-    return d.content?.[0]?.text||'';
+    return d.text||'';  // Gemini API returns { text: "..." }
   }catch(e){return 'Error: '+e.message;}
 }
 async function speak(text){
