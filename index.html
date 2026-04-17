@@ -654,20 +654,41 @@ async function generateWeekSchedule(){
   if(!requireKey())return null;
   const p=getProfile();
   const isWife=activeUser==='Wife';
-  const prompt=`Create a ${p.daysPerWeek}-day workout schedule for the week (Monday-Sunday).
-Goals: ${(p.goals||['muscle']).join(', ')}. ${isWife?'Postpartum recovery.':''}
-Return ONLY JSON for all 7 days:
-{"Monday":{"isRest":false,"focus":"Chest & Triceps","hasCardio":true,"cardioNote":"15 min treadmill"},"Tuesday":{"isRest":true,"note":"Active recovery"},...}
-Rules: ${p.daysPerWeek} workout days, rest of days are rest. Spread muscle groups. No back-to-back heavy days.`;
-  const res=await callAI([{role:'user',content:prompt}],'Return only valid JSON. No markdown. Start with {',2000);  // Increased from 600 to 2000 for full week JSON
-  console.log('Weekly schedule response:',res?.substring?.(0,100));
+  const prompt=`Generate a JSON workout schedule for Monday through Sunday (7 days total). Return ONLY the JSON object, nothing else.
+User: ${p.daysPerWeek} workout days per week. Goals: ${(p.goals||['muscle']).join(', ')}${isWife?' Postpartum-safe.':''}
+Equipment: ${EQ[p.equipment]}
+JSON structure (each day must have isRest, focus, and optional hasCardio):
+{
+  "Monday": {"isRest": false, "focus": "Chest and Triceps", "hasCardio": false},
+  "Tuesday": {"isRest": true, "focus": "Rest day", "hasCardio": false},
+  "Wednesday": {"isRest": false, "focus": "Back and Biceps", "hasCardio": true},
+  "Thursday": {"isRest": false, "focus": "Legs", "hasCardio": false},
+  "Friday": {"isRest": false, "focus": "Shoulders", "hasCardio": true},
+  "Saturday": {"isRest": false, "focus": "Full Body", "hasCardio": false},
+  "Sunday": {"isRest": true, "focus": "Rest day", "hasCardio": false}
+}
+Return valid JSON. No code blocks. No extra text.`;
+  const res=await callAI([{role:'user',content:prompt}],'You are a fitness expert. Return ONLY valid JSON. No markdown, no code blocks, no explanation.',2500);
+  console.log('Weekly schedule response length:',res?.length,'first 200 chars:',res?.substring?.(0,200));
   if(!res||res.startsWith?.('Error'))return null;
   try{
-    const clean=res.replace(/```json|```/g,'').trim();
-    const s=clean.indexOf('{');const e=clean.lastIndexOf('}');
-    if(s!==-1&&e!==-1)return JSON.parse(clean.slice(s,e+1));
-    return JSON.parse(clean);
-  }catch(err){console.error('Parse error:',err,res);return null;}
+    let clean=res.trim();
+    // Remove markdown code blocks if present
+    clean=clean.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim();
+    // Find JSON boundaries
+    const s=clean.indexOf('{');
+    const e=clean.lastIndexOf('}');
+    if(s===-1||e===-1){console.error('No JSON object found in response:',clean);return null;}
+    clean=clean.slice(s,e+1);
+    // Parse and validate structure
+    const data=JSON.parse(clean);
+    // Validate all 7 days exist
+    const days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    for(const day of days){
+      if(!data[day]){console.error('Missing day:',day);return null;}
+    }
+    return data;
+  }catch(err){console.error('Weekly schedule parse error:',err.message,'Response:',res?.substring?.(0,300));return null;}
 }
 
 async function generateTodayWorkout(){
